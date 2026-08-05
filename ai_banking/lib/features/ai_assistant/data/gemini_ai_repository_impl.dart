@@ -4,13 +4,35 @@ import '../models/chat_message.dart';
 import '../repositories/ai_repository.dart';
 
 class GeminiAiRepositoryImpl implements AiRepository {
-
   GeminiAiRepositoryImpl(this._model);
   final GenerativeModel _model;
 
   @override
   Stream<String> getStreamingResponse(String prompt, Map<String, dynamic> context) async* {
-    final systemPrompt = '''
+    final systemPrompt = _buildSystemPrompt(context);
+    final content = [Content.text('$systemPrompt\n\nUser Question: $prompt')];
+
+    try {
+      final response = _model.generateContentStream(content);
+
+      await for (final chunk in response) {
+        if (chunk.text != null) {
+          yield chunk.text!;
+        }
+      }
+    } catch (e) {
+      print('[GeminiAI] Error in v1 stream: $e');
+      
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('401') || errorStr.contains('invalid authentication')) {
+        throw 'Authentication Failed (v1). Please ensure your GEMINI_API_KEY in .env is correct and you have run build_runner. Note: AQ keys work best on port 5000.';
+      }
+      rethrow;
+    }
+  }
+
+  String _buildSystemPrompt(Map<String, dynamic> context) {
+    return '''
 You are SmartBank AI, a highly intelligent and helpful financial assistant for a premium digital bank.
 You have access to the user's real-time financial data provided in JSON format below.
 
@@ -27,17 +49,6 @@ INSTRUCTIONS:
 7. Do not mention technical details like Firestore IDs or JSON keys.
 8. If data is missing or zero, acknowledge it politely instead of making up numbers.
 ''';
-
-    final fullPrompt = '$systemPrompt\n\nUser Question: $prompt';
-    final content = [Content.text(fullPrompt)];
-    
-    final response = _model.generateContentStream(content);
-
-    await for (final chunk in response) {
-      if (chunk.text != null) {
-        yield chunk.text!;
-      }
-    }
   }
 
   @override

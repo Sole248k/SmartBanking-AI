@@ -25,6 +25,7 @@ mixin _$ChatMessage {
   String get content => throw _privateConstructorUsedError;
   DateTime get timestamp => throw _privateConstructorUsedError;
   bool get isStreaming => throw _privateConstructorUsedError;
+  bool get isError => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -43,7 +44,8 @@ abstract class $ChatMessageCopyWith<$Res> {
       MessageRole role,
       String content,
       DateTime timestamp,
-      bool isStreaming});
+      bool isStreaming,
+      bool isError});
 }
 
 /// @nodoc
@@ -64,6 +66,7 @@ class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage>
     Object? content = null,
     Object? timestamp = null,
     Object? isStreaming = null,
+    Object? isError = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -86,6 +89,10 @@ class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage>
           ? _value.isStreaming
           : isStreaming // ignore: cast_nullable_to_non_nullable
               as bool,
+      isError: null == isError
+          ? _value.isError
+          : isError // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -103,7 +110,8 @@ abstract class _$$ChatMessageImplCopyWith<$Res>
       MessageRole role,
       String content,
       DateTime timestamp,
-      bool isStreaming});
+      bool isStreaming,
+      bool isError});
 }
 
 /// @nodoc
@@ -122,6 +130,7 @@ class __$$ChatMessageImplCopyWithImpl<$Res>
     Object? content = null,
     Object? timestamp = null,
     Object? isStreaming = null,
+    Object? isError = null,
   }) {
     return _then(_$ChatMessageImpl(
       id: null == id
@@ -144,6 +153,10 @@ class __$$ChatMessageImplCopyWithImpl<$Res>
           ? _value.isStreaming
           : isStreaming // ignore: cast_nullable_to_non_nullable
               as bool,
+      isError: null == isError
+          ? _value.isError
+          : isError // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -156,7 +169,8 @@ class _$ChatMessageImpl implements _ChatMessage {
       required this.role,
       required this.content,
       required this.timestamp,
-      this.isStreaming = false});
+      this.isStreaming = false,
+      this.isError = false});
 
   factory _$ChatMessageImpl.fromJson(Map<String, dynamic> json) =>
       _$$ChatMessageImplFromJson(json);
@@ -172,10 +186,13 @@ class _$ChatMessageImpl implements _ChatMessage {
   @override
   @JsonKey()
   final bool isStreaming;
+  @override
+  @JsonKey()
+  final bool isError;
 
   @override
   String toString() {
-    return 'ChatMessage(id: $id, role: $role, content: $content, timestamp: $timestamp, isStreaming: $isStreaming)';
+    return 'ChatMessage(id: $id, role: $role, content: $content, timestamp: $timestamp, isStreaming: $isStreaming, isError: $isError)';
   }
 
   @override
@@ -189,13 +206,14 @@ class _$ChatMessageImpl implements _ChatMessage {
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp) &&
             (identical(other.isStreaming, isStreaming) ||
-                other.isStreaming == isStreaming));
+                other.isStreaming == isStreaming) &&
+            (identical(other.isError, isError) || other.isError == isError));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, role, content, timestamp, isStreaming);
+  int get hashCode => Object.hash(
+      runtimeType, id, role, content, timestamp, isStreaming, isError);
 
   @JsonKey(ignore: true)
   @override
@@ -217,7 +235,8 @@ abstract class _ChatMessage implements ChatMessage {
       required final MessageRole role,
       required final String content,
       required final DateTime timestamp,
-      final bool isStreaming}) = _$ChatMessageImpl;
+      final bool isStreaming,
+      final bool isError}) = _$ChatMessageImpl;
 
   factory _ChatMessage.fromJson(Map<String, dynamic> json) =
       _$ChatMessageImpl.fromJson;
@@ -232,6 +251,8 @@ abstract class _ChatMessage implements ChatMessage {
   DateTime get timestamp;
   @override
   bool get isStreaming;
+  @override
+  bool get isError;
   @override
   @JsonKey(ignore: true)
   _$$ChatMessageImplCopyWith<_$ChatMessageImpl> get copyWith =>

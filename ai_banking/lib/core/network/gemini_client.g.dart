@@ -6,7 +6,7 @@ part of 'gemini_client.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$geminiClientHash() => r'eb51049aa25bc199edf4823e6ae04e2df86df86a';
+String _$geminiClientHash() => r'f71d8b0dd96c0152a3044a135b49ef07bec52a48';
 
 /// See also [geminiClient].
 @ProviderFor(geminiClient)

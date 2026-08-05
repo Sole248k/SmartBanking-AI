@@ -28,13 +28,18 @@ class ChatBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isUser 
             ? theme.colorScheme.primary 
-            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            : (message.isError 
+                ? theme.colorScheme.errorContainer.withValues(alpha: 0.5)
+                : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(AppConstants.radiusLg),
             topRight: const Radius.circular(AppConstants.radiusLg),
             bottomLeft: Radius.circular(isUser ? AppConstants.radiusLg : 0),
             bottomRight: Radius.circular(isUser ? 0 : AppConstants.radiusLg),
           ),
+          border: message.isError 
+            ? Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)) 
+            : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +53,7 @@ class ChatBubble extends StatelessWidget {
                 ),
               )
             else
-              isUser
+              message.role == MessageRole.user
                   ? Text(
                       message.content,
                       style: const TextStyle(
@@ -56,13 +61,40 @@ class ChatBubble extends StatelessWidget {
                         fontSize: 15,
                       ),
                     )
-                  : MarkdownBody(
-                      data: message.content,
-                      selectable: true,
-                      styleSheet: MarkdownStyleSheet(
-                        p: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
-                        strong: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (message.isError)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline, size: 16, color: theme.colorScheme.error),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'AI Error',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.error,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        MarkdownBody(
+                          data: message.content,
+                          selectable: true,
+                          styleSheet: MarkdownStyleSheet(
+                            p: TextStyle(
+                              color: message.isError 
+                                ? theme.colorScheme.error 
+                                : theme.colorScheme.onSurface, 
+                              fontSize: 15,
+                            ),
+                            strong: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ),
             const SizedBox(height: 4),
             Text(

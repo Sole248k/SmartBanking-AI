@@ -13,6 +13,7 @@ class ChatMessage with _$ChatMessage {
     required String content,
     required DateTime timestamp,
     @Default(false) bool isStreaming,
+    @Default(false) bool isError,
   }) = _ChatMessage;
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);

@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'core/network/env.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -40,8 +41,8 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBjeWci83Jp43gedkNfNisd5s-SdSBx6QM',
+  static final FirebaseOptions web = FirebaseOptions(
+    apiKey: Env.firebaseWebApiKey,
     appId: '1:1099392878008:web:d348e475fefe8645e2fb4d',
     messagingSenderId: '1099392878008',
     projectId: 'smartbank-ai-c784d',
@@ -50,16 +51,16 @@ class DefaultFirebaseOptions {
     measurementId: 'G-SR5VSCK6GR',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyArD3rUObpiCZWEWGBjB5-nBu6zmrQUFNo',
+  static final FirebaseOptions android = FirebaseOptions(
+    apiKey: Env.firebaseAndroidApiKey,
     appId: '1:1099392878008:android:82db1abdb4c0a69fe2fb4d',
     messagingSenderId: '1099392878008',
     projectId: 'smartbank-ai-c784d',
     storageBucket: 'smartbank-ai-c784d.firebasestorage.app',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBww-t-2O80HrAJU-r7OD550FmVyDmV8q0',
+  static final FirebaseOptions ios = FirebaseOptions(
+    apiKey: Env.firebaseIosApiKey,
     appId: '1:1099392878008:ios:f816cf70818e0970e2fb4d',
     messagingSenderId: '1099392878008',
     projectId: 'smartbank-ai-c784d',
@@ -68,8 +69,8 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.aiBanking',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBww-t-2O80HrAJU-r7OD550FmVyDmV8q0',
+  static final FirebaseOptions macos = FirebaseOptions(
+    apiKey: Env.firebaseMacosApiKey,
     appId: '1:1099392878008:ios:f816cf70818e0970e2fb4d',
     messagingSenderId: '1099392878008',
     projectId: 'smartbank-ai-c784d',
@@ -78,8 +79,8 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.aiBanking',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBjeWci83Jp43gedkNfNisd5s-SdSBx6QM',
+  static final FirebaseOptions windows = FirebaseOptions(
+    apiKey: Env.firebaseWindowsApiKey,
     appId: '1:1099392878008:web:1570f2de287d3cdce2fb4d',
     messagingSenderId: '1099392878008',
     projectId: 'smartbank-ai-c784d',

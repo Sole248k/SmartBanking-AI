@@ -13,6 +13,7 @@ _$ChatMessageImpl _$$ChatMessageImplFromJson(Map<String, dynamic> json) =>
       content: json['content'] as String,
       timestamp: DateTime.parse(json['timestamp'] as String),
       isStreaming: json['isStreaming'] as bool? ?? false,
+      isError: json['isError'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$ChatMessageImplToJson(_$ChatMessageImpl instance) =>
@@ -22,6 +23,7 @@ Map<String, dynamic> _$$ChatMessageImplToJson(_$ChatMessageImpl instance) =>
       'content': instance.content,
       'timestamp': instance.timestamp.toIso8601String(),
       'isStreaming': instance.isStreaming,
+      'isError': instance.isError,
     };
 
 const _$MessageRoleEnumMap = {

@@ -1,10 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
-import '../../../core/network/gemini_client.dart';
 import '../../dashboard/providers/active_account_provider.dart';
 import '../../dashboard/providers/dashboard_providers.dart';
 import '../../analytics/providers/analytics_providers.dart';
-import '../data/gemini_ai_repository_impl.dart';
+import '../data/groq_repository_impl.dart';
 import '../models/chat_message.dart';
 import '../repositories/ai_repository.dart';
 
@@ -12,8 +11,9 @@ part 'ai_providers.g.dart';
 
 @riverpod
 AiRepository aiRepository(AiRepositoryRef ref) {
-  final model = ref.watch(geminiClientProvider);
-  return GeminiAiRepositoryImpl(model);
+  // Groq free tier — no end-user login required.
+  // Developer embeds their free key from https://console.groq.com
+  return GroqRepositoryImpl();
 }
 
 @riverpod
@@ -73,26 +73,43 @@ class AiChatController extends _$AiChatController {
     };
 
     String fullResponse = '';
-    final stream = ref.read(aiRepositoryProvider).getStreamingResponse(content, context);
+    try {
+      print('[AiChatController] Requesting stream from repository...');
+      final stream = ref.read(aiRepositoryProvider).getStreamingResponse(content, context);
 
-    await for (final chunk in stream) {
-      fullResponse += chunk;
+      await for (final chunk in stream) {
+        fullResponse += chunk;
+        state = [
+          for (final msg in state)
+            if (msg.id == assistantMessageId)
+              msg.copyWith(content: fullResponse)
+            else
+              msg
+        ];
+      }
+      print('[AiChatController] Stream completed. Full length: ${fullResponse.length}');
+
       state = [
         for (final msg in state)
           if (msg.id == assistantMessageId)
-            msg.copyWith(content: fullResponse)
+            msg.copyWith(isStreaming: false)
+          else
+            msg
+      ];
+    } catch (e) {
+      print('[AiChatController] Stream Error: $e');
+      state = [
+        for (final msg in state)
+          if (msg.id == assistantMessageId)
+            msg.copyWith(
+              content: 'Sorry, I encountered an error: $e',
+              isStreaming: false,
+              isError: true,
+            )
           else
             msg
       ];
     }
-
-    state = [
-      for (final msg in state)
-        if (msg.id == assistantMessageId)
-          msg.copyWith(isStreaming: false)
-        else
-          msg
-    ];
   }
 
   void clearChat() {

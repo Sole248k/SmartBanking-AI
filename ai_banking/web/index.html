@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -35,8 +35,74 @@
   <!-- Load the Google Sign-In Platform Library -->
   <script src="https://apis.google.com/js/platform.js" async defer></script>
 
+  <!-- Puter.js - Free unlimited AI API -->
+  <script src="https://js.puter.com/v2/"></script>
+  <script>
+    // Bridge: non-streaming chat for fallback
+    window.puterChat = async function(prompt, onSuccess, onError) {
+      try {
+        const resp = await puter.ai.chat(prompt, { model: 'gpt-4o-mini' });
+        const text = (typeof resp === 'string') ? resp
+          : resp?.message?.content?.[0]?.text
+          ?? resp?.message?.content
+          ?? resp?.text
+          ?? JSON.stringify(resp);
+        onSuccess(text);
+      } catch(e) {
+        onError(e?.message || e?.toString() || 'Unknown Puter error');
+      }
+    };
+
+    // Bridge: streaming chat — calls chunkCb for each token, doneCb when done
+    window.puterChatStream = async function(prompt, chunkCb, doneCb, errorCb) {
+      try {
+        const stream = await puter.ai.chat(prompt, { model: 'gpt-4o-mini', stream: true });
+        for await (const part of stream) {
+          const chunk = part?.text ?? '';
+          if (chunk) chunkCb(chunk);
+        }
+        doneCb();
+      } catch(e) {
+        errorCb(e?.message || e?.toString() || 'Unknown Puter error');
+      }
+    };
+  </script>
+
   <!-- Google Sign-In Client ID (Replace with your actual ID from Google Cloud Console) -->
   <meta name="google-signin-client_id" content="40397828048-ier1lkfev7840eknaekkujf6arlf5qpa.apps.googleusercontent.com">
+
+  <script>
+    /*
+      Force the HTML renderer using a non-destructive interceptor.
+      This fixes the CanvasKit timeout white screen while ensuring
+      the official FlutterLoader is properly initialized.
+    */
+    (function() {
+      var flutter = window._flutter || {};
+      var loader;
+      Object.defineProperty(flutter, 'loader', {
+        get: function() { return loader; },
+        set: function(v) {
+          loader = v;
+          if (loader && !loader._interceptorApplied) {
+            loader._interceptorApplied = true;
+            var originalDidCreate = loader.didCreateEngineInitializer;
+            loader.didCreateEngineInitializer = function(engineInitializer) {
+              engineInitializer.initializeEngine({
+                renderer: "html"
+              }).then(function(appRunner) {
+                appRunner.runApp();
+              });
+              if (originalDidCreate) originalDidCreate(engineInitializer);
+            };
+          }
+        },
+        configurable: true,
+        enumerable: true
+      });
+      window._flutter = flutter;
+    })();
+  </script>
 </head>
 <body>
 <!--

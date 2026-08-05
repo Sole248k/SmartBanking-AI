@@ -6,7 +6,7 @@ part of 'ai_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$aiRepositoryHash() => r'e6aac4aa62c05181934488d1a84444ad633ec209';
+String _$aiRepositoryHash() => r'314c0978b887a1eaf0de6c7d96593fe4783a2545';
 
 /// See also [aiRepository].
 @ProviderFor(aiRepository)
@@ -20,7 +20,7 @@ final aiRepositoryProvider = AutoDisposeProvider<AiRepository>.internal(
 );
 
 typedef AiRepositoryRef = AutoDisposeProviderRef<AiRepository>;
-String _$aiChatControllerHash() => r'43a9c9e6085b2546c1abff8bc0cd8369118f3e4c';
+String _$aiChatControllerHash() => r'26488e7f0d14bbaaa04b963d58f237b617c521bc';
 
 /// See also [AiChatController].
 @ProviderFor(AiChatController)
