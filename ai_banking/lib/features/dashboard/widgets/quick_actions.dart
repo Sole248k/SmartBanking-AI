@@ -7,28 +7,58 @@ class QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
       children: [
-        _ActionButton(
-          icon: Icons.send_rounded,
-          label: 'Send',
-          onTap: () => context.go('/transfer'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _ActionButton(
+              icon: Icons.send_rounded,
+              label: 'Send',
+              onTap: () => context.go('/transfer'),
+            ),
+            _ActionButton(
+              icon: Icons.call_received_rounded,
+              label: 'Request',
+              onTap: () => context.push('/request-money'),
+            ),
+            _ActionButton(
+              icon: Icons.receipt_long_rounded,
+              label: 'Bills',
+              onTap: () => context.push('/pay-bills'),
+            ),
+            _ActionButton(
+              icon: Icons.add_circle_outline_rounded,
+              label: 'Top-up',
+              onTap: () => context.push('/wallet/top-up'),
+            ),
+          ],
         ),
-        _ActionButton(
-          icon: Icons.call_received_rounded,
-          label: 'Request',
-          onTap: () => context.push('/request-money'),
-        ),
-        _ActionButton(
-          icon: Icons.receipt_long_rounded,
-          label: 'Bills',
-          onTap: () => context.push('/pay-bills'),
-        ),
-        _ActionButton(
-          icon: Icons.add_circle_outline_rounded,
-          label: 'Top-up',
-          onTap: () => context.push('/wallet/top-up'),
+        const SizedBox(height: AppConstants.lg),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _ActionButton(
+              icon: Icons.savings_rounded,
+              label: 'Savings',
+              onTap: () => context.push('/savings'),
+            ),
+            _ActionButton(
+              icon: Icons.verified_user_rounded,
+              label: 'Verify',
+              onTap: () => context.push('/kyc'),
+            ),
+            _ActionButton(
+              icon: Icons.pie_chart_rounded,
+              label: 'Budgets',
+              onTap: () => context.push('/budgets'),
+            ),
+            _ActionButton(
+              icon: Icons.more_horiz_rounded,
+              label: 'More',
+              onTap: () {},
+            ),
+          ],
         ),
       ],
     );

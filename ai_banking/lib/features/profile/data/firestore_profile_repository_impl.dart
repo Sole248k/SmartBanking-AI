@@ -16,11 +16,37 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
       if (user == null) return left(const AuthFailure('User not logged in'));
 
       final doc = await _firestore.collection('profiles').doc(user.uid).get();
+
       if (!doc.exists) {
-        return left(const ServerFailure('Profile not found. Please try logging out and back in to sync your data.'));
+        // Self-heal: create the profile document from Firebase Auth data
+        // so the user always sees their data even if provisioning was slow.
+        final profileData = {
+          'fullName': user.displayName ?? 'SmartBank User',
+          'email': user.email ?? '',
+          'kycStatus': 'Not Started',
+          'isBiometricEnabled': false,
+          'pushNotificationsEnabled': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        };
+        await _firestore.collection('profiles').doc(user.uid).set(profileData);
+        return right(UserProfile(
+          id: user.uid,
+          fullName: user.displayName ?? 'SmartBank User',
+          email: user.email ?? '',
+        ));
       }
-      
-      return right(UserProfile.fromJson({...doc.data()!, 'id': doc.id}));
+
+      final data = doc.data()!;
+      // Ensure email is always populated (self-heal for older records)
+      if (data['email'] == null || (data['email'] as String).isEmpty) {
+        await _firestore
+            .collection('profiles')
+            .doc(user.uid)
+            .update({'email': user.email ?? ''});
+        data['email'] = user.email ?? '';
+      }
+
+      return right(UserProfile.fromJson({...data, 'id': doc.id}));
     } catch (e) {
       return left(ServerFailure(e.toString()));
     }
@@ -29,7 +55,10 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
   @override
   Future<Either<Failure, UserProfile>> updateProfile(UserProfile profile) async {
     try {
-      await _firestore.collection('profiles').doc(profile.id).set(profile.toJson());
+      await _firestore
+          .collection('profiles')
+          .doc(profile.id)
+          .set(profile.toJson(), SetOptions(merge: true));
       return right(profile);
     } catch (e) {
       return left(ServerFailure(e.toString()));
@@ -41,7 +70,10 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        await _firestore.collection('profiles').doc(user.uid).update({'isBiometricEnabled': enabled});
+        await _firestore
+            .collection('profiles')
+            .doc(user.uid)
+            .update({'isBiometricEnabled': enabled});
       }
       return right(null);
     } catch (e) {

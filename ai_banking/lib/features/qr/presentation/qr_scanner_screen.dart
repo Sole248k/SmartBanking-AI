@@ -13,8 +13,6 @@ class QrScannerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan QR Code'),
@@ -29,23 +27,29 @@ class QrScannerScreen extends ConsumerWidget {
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 if (barcode.rawValue != null) {
-                  final result = await ref.read(qrRepositoryProvider).parseQrCode(barcode.rawValue!);
+                  final result = await ref
+                      .read(qrRepositoryProvider)
+                      .parseQrCode(barcode.rawValue!);
                   result.fold(
                     (failure) => ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(failure.message)),
                     ),
                     (qrData) {
-                      // Pre-fill transfer and navigate
                       final beneficiary = Beneficiary(
                         id: qrData.recipientId,
-                        userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                        userId:
+                            FirebaseAuth.instance.currentUser?.uid ?? '',
                         name: qrData.recipientName,
                         accountNumber: qrData.accountNumber,
                         bankName: 'SmartBank',
                       );
-                      ref.read(transferControllerProvider.notifier).selectBeneficiary(beneficiary);
+                      ref
+                          .read(transferControllerProvider.notifier)
+                          .selectBeneficiary(beneficiary);
                       if (qrData.amount != null) {
-                        ref.read(transferControllerProvider.notifier).setAmount(qrData.amount!);
+                        ref
+                            .read(transferControllerProvider.notifier)
+                            .setAmount(qrData.amount!);
                       }
                       context.pushReplacement('/transfer');
                     },
@@ -55,7 +59,6 @@ class QrScannerScreen extends ConsumerWidget {
               }
             },
           ),
-          // Scanner Overlay
           _buildOverlay(context),
         ],
       ),
@@ -82,7 +85,8 @@ class QrScannerScreen extends ConsumerWidget {
             const SizedBox(height: AppConstants.xl),
             const Text(
               'Align QR code within the frame',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ],
         ),

@@ -9,7 +9,6 @@ import '../../app/theme/theme_provider.dart';
 import '../../core/services/firebase_service/database_seeder.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/providers/privacy_provider.dart';
-import '../../shared/widgets/privacy_sensitive_text.dart';
 import '../profile/providers/profile_providers.dart';
 import 'providers/dashboard_providers.dart';
 import 'widgets/card_carousel.dart';
@@ -51,9 +50,11 @@ class DashboardScreen extends ConsumerWidget {
               text: 'Seed Database (Debug)',
               onPressed: () async {
                 await DatabaseSeeder.seedData();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Database seeded successfully!')),
-                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Database seeded successfully!')),
+                  );
+                }
               },
             ),
           ],

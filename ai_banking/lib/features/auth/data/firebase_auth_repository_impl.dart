@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../core/errors/failure.dart';
 import '../../../core/services/firebase_service/user_provisioning_service.dart';
@@ -9,9 +9,29 @@ import '../domain/auth_user.dart';
 
 class FirebaseAuthRepositoryImpl implements AuthRepository {
   final firebase.FirebaseAuth _auth = firebase.FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final LocalAuthentication _localAuth = LocalAuthentication();
   final UserProvisioningService _provisioningService = UserProvisioningService();
+
+  @override
+  Future<bool> isBiometricsAvailable() async {
+    final bool canAuthenticateWithBiometrics = await _localAuth.canCheckBiometrics;
+    final bool canAuthenticate = canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
+    return canAuthenticate;
+  }
+
+  @override
+  Future<Either<Failure, bool>> authenticateWithBiometrics() async {
+    try {
+      final bool didAuthenticate = await _localAuth.authenticate(
+        localizedReason: 'Please authenticate to access your account',
+        biometricOnly: true,
+      );
+      return right(didAuthenticate);
+    } catch (e) {
+      return left(AuthFailure('Biometric authentication failed: $e'));
+    }
+  }
 
   @override
   Future<Either<Failure, AuthUser>> login(String email, String password) async {

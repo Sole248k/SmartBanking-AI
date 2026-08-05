@@ -13,4 +13,8 @@ abstract class AuthRepository {
   Future<Either<Failure, void>> logout();
   Future<Either<Failure, AuthUser>> getCurrentUser();
   Stream<AuthUser?> authStateChanges();
+  
+  // Biometrics
+  Future<bool> isBiometricsAvailable();
+  Future<Either<Failure, bool>> authenticateWithBiometrics();
 }

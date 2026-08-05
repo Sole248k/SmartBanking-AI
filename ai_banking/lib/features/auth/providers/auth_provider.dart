@@ -19,7 +19,8 @@ Stream<AuthUser?> authStateChanges(AuthStateChangesRef ref) {
 class AuthNotifier extends _$AuthNotifier {
   @override
   FutureOr<AuthUser?> build() async {
-    // Listen to auth state changes from Firebase
+    // Keep state in sync with Firebase auth stream.
+    // Using listenSelf so we don't miss the initial value.
     ref.listen(authStateChangesProvider, (previous, next) {
       if (next is AsyncData) {
         state = AsyncData(next.value);
@@ -50,6 +51,12 @@ class AuthNotifier extends _$AuthNotifier {
       (failure) => AsyncValue.error(failure.message, StackTrace.current),
       (user) => AsyncValue.data(user),
     );
+    // After successful registration the profile document has just been
+    // written by UserProvisioningService. Invalidate the profile so it
+    // re-fetches with the retry logic instead of serving a stale null.
+    if (state.hasValue && state.value != null) {
+      ref.invalidate(authStateChangesProvider);
+    }
   }
 
   Future<void> signInWithGoogle() async {
