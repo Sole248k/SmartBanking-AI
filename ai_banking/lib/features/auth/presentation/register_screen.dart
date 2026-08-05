@@ -58,7 +58,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: AppConstants.xl),
-              
+
               AppTextField(
                 controller: _nameController,
                 label: 'Full Name',
@@ -67,7 +67,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 validator: ValidationUtils.validateFullName,
               ),
               const SizedBox(height: AppConstants.md),
-              
+
               AppTextField(
                 controller: _emailController,
                 label: 'Email Address',
@@ -77,30 +77,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 validator: ValidationUtils.validateEmail,
               ),
               const SizedBox(height: AppConstants.md),
-              
+
               AppTextField(
                 controller: _passwordController,
                 label: 'Password',
-                hint: '••••••••',
+                hint: 'password',
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
                 validator: ValidationUtils.validatePassword,
               ),
               const SizedBox(height: AppConstants.md),
-              
+
               AppTextField(
                 controller: _confirmPasswordController,
                 label: 'Confirm Password',
-                hint: '••••••••',
+                hint: 'confirm password',
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
                 validator: (val) {
-                  if (val != _passwordController.text) return 'Passwords do not match';
+                  if (val != _passwordController.text)
+                    return 'Passwords do not match';
                   return null;
                 },
               ),
               const SizedBox(height: AppConstants.xl),
-              
+
               authState.maybeWhen(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 orElse: () => Column(
@@ -115,13 +116,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       variant: AppButtonVariant.outline,
                       icon: Icons.g_mobiledata_rounded,
                       onPressed: () async {
-                        await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+                        await ref
+                            .read(authNotifierProvider.notifier)
+                            .signInWithGoogle();
                       },
                     ),
                   ],
                 ),
               ),
-              
+
               if (authState.hasError)
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
@@ -130,7 +133,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     style: const TextStyle(color: Colors.red),
                   ),
                 ),
-              
+
               const SizedBox(height: AppConstants.xl),
               Center(
                 child: TextButton(
@@ -147,11 +150,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      await ref.read(authNotifierProvider.notifier).register(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-        _nameController.text.trim(),
-      );
+      await ref
+          .read(authNotifierProvider.notifier)
+          .register(
+            _emailController.text.trim(),
+            _passwordController.text.trim(),
+            _nameController.text.trim(),
+          );
     }
   }
 }

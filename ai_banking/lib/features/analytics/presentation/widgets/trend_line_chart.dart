@@ -1,6 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import '../../../../app/constants/app_constants.dart';
 import '../../models/spending_report.dart';
 
 class TrendLineChart extends StatelessWidget {

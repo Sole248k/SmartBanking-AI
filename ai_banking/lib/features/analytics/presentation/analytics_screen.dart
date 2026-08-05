@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../core/utils/chart_utils.dart';
 import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/app_shimmer.dart';
 import '../providers/analytics_providers.dart';
 import 'widgets/spending_pie_chart.dart';
 import 'widgets/trend_line_chart.dart';

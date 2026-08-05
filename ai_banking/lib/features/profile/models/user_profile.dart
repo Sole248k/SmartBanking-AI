@@ -13,7 +13,7 @@ class UserProfile with _$UserProfile {
     String? avatarUrl,
     @Default(false) bool isBiometricEnabled,
     @Default(false) bool pushNotificationsEnabled,
-    @Default('Verified') String kycStatus,
+    @Default('Not Started') String kycStatus,
   }) = _UserProfile;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => _$UserProfileFromJson(json);

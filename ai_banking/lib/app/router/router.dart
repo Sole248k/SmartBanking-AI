@@ -23,6 +23,9 @@ import '../../features/budget/presentation/budget_list_screen.dart';
 import '../../features/budget/presentation/create_budget_screen.dart';
 import '../../features/ai_assistant/presentation/ai_assistant_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/kyc/presentation/screens/kyc_main_flow.dart';
+import '../../features/savings/presentation/screens/savings_screen.dart';
+import '../../features/savings/presentation/screens/savings_create_screen.dart';
 import '../../shared/models/account.dart';
 
 part 'router.g.dart';
@@ -68,6 +71,10 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/kyc',
+        builder: (context, state) => const KycMainFlow(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -160,6 +167,16 @@ GoRouter router(RouterRef ref) {
           GoRoute(
             path: '/profile',
             builder: (context, state) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: '/savings',
+            builder: (context, state) => const SavingsScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                builder: (context, state) => const SavingsCreateScreen(),
+              ),
+            ],
           ),
           // Add other shell routes here
         ],

@@ -4,7 +4,8 @@ import '../../utils/bank_utils.dart';
 class UserProvisioningService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Provisions all initial Firestore documents for a new user
+  /// Provisions all initial Firestore documents for a new user.
+  /// Safe to call multiple times (idempotent).
   Future<void> provisionNewUser({
     required String uid,
     required String email,
@@ -14,20 +15,30 @@ class UserProvisioningService {
     final profileRef = _firestore.collection('profiles').doc(uid);
     final profileSnapshot = await profileRef.get();
 
-    // 1. Create or Update Profile
+    // 1. Create or update Profile document
     if (!profileSnapshot.exists) {
       await profileRef.set({
         'fullName': fullName,
         'email': email,
-        'kycStatus': 'Verified',
+        'kycStatus': 'Not Started',
         'isBiometricEnabled': false,
         'pushNotificationsEnabled': true,
+        'createdAt': FieldValue.serverTimestamp(),
       });
     } else {
-      // Self-heal: If name is generic, update it with the one from Auth
-      final data = profileSnapshot.data();
-      if (data?['fullName'] == 'SmartBank User' && fullName != 'SmartBank User') {
-        await profileRef.update({'fullName': fullName});
+      final data = profileSnapshot.data()!;
+      final updates = <String, dynamic>{};
+      // Self-heal: update generic name
+      if ((data['fullName'] == 'SmartBank User' || data['fullName'] == null) &&
+          fullName != 'SmartBank User') {
+        updates['fullName'] = fullName;
+      }
+      // Self-heal: ensure email is always present
+      if (data['email'] == null || (data['email'] as String).isEmpty) {
+        updates['email'] = email;
+      }
+      if (updates.isNotEmpty) {
+        await profileRef.update(updates);
       }
     }
 

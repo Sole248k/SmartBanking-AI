@@ -21,7 +21,6 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
   Widget build(BuildContext context) {
     final walletState = ref.watch(walletControllerProvider);
     final accountsAsync = ref.watch(dashboardAccountsProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(

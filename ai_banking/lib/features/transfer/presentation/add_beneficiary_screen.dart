@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,13 +8,13 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../models/beneficiary.dart';
 import '../providers/transfer_providers.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class AddBeneficiaryScreen extends ConsumerStatefulWidget {
   const AddBeneficiaryScreen({super.key});
 
   @override
-  ConsumerState<AddBeneficiaryScreen> createState() => _AddBeneficiaryScreenState();
+  ConsumerState<AddBeneficiaryScreen> createState() =>
+      _AddBeneficiaryScreenState();
 }
 
 class _AddBeneficiaryScreenState extends ConsumerState<AddBeneficiaryScreen> {
@@ -33,12 +34,8 @@ class _AddBeneficiaryScreenState extends ConsumerState<AddBeneficiaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Beneficiary'),
-      ),
+      appBar: AppBar(title: const Text('Add Beneficiary')),
       body: SingleChildScrollView(
         padding: AppConstants.screenPadding,
         child: Form(
@@ -50,7 +47,8 @@ class _AddBeneficiaryScreenState extends ConsumerState<AddBeneficiaryScreen> {
                 label: 'Full Name',
                 hint: 'Enter recipient name',
                 prefixIcon: Icons.person_outline,
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: AppConstants.md),
               AppTextField(
@@ -58,7 +56,8 @@ class _AddBeneficiaryScreenState extends ConsumerState<AddBeneficiaryScreen> {
                 label: 'Account Number',
                 hint: '010-XXXX-XXXX',
                 prefixIcon: Icons.numbers_outlined,
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: AppConstants.md),
               AppTextField(
@@ -66,7 +65,8 @@ class _AddBeneficiaryScreenState extends ConsumerState<AddBeneficiaryScreen> {
                 label: 'Bank Name',
                 hint: 'e.g. SmartBank',
                 prefixIcon: Icons.account_balance_outlined,
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: AppConstants.xl),
               AppButton(
@@ -84,7 +84,7 @@ class _AddBeneficiaryScreenState extends ConsumerState<AddBeneficiaryScreen> {
   Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
       final beneficiary = Beneficiary(
         id: const Uuid().v4(),
@@ -94,8 +94,9 @@ class _AddBeneficiaryScreenState extends ConsumerState<AddBeneficiaryScreen> {
         bankName: _bankController.text.trim(),
       );
 
-      final result = await ref.read(transferRepositoryProvider).addBeneficiary(beneficiary);
-      
+      final result =
+          await ref.read(transferRepositoryProvider).addBeneficiary(beneficiary);
+
       if (mounted) {
         setState(() => _isLoading = false);
         result.fold(

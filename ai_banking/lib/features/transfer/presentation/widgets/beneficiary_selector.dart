@@ -14,7 +14,6 @@ class BeneficiarySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final beneficiariesAsync = ref.watch(beneficiariesProvider);
-    final theme = Theme.of(context);
 
     return Column(
       children: [
