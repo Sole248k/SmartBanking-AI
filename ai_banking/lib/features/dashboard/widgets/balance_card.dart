@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../shared/models/account.dart';
+import '../../../shared/providers/privacy_provider.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/privacy_sensitive_text.dart';
 
@@ -96,7 +98,35 @@ class _BalanceCardState extends State<BalanceCard> with SingleTickerProviderStat
                             ),
                           ],
                         ),
-                        _getNetworkIcon(widget.account.cardNetwork),
+                        Row(
+                          children: [
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final isPrivacyEnabled = ref.watch(privacyModeProvider);
+                                return InkWell(
+                                  onTap: () => ref.read(privacyModeProvider.notifier).toggle(),
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.18),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      isPrivacyEnabled
+                                          ? Icons.visibility_off_rounded
+                                          : Icons.visibility_rounded,
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                      size: 18,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: AppConstants.sm),
+                            _getNetworkIcon(widget.account.cardNetwork),
+                          ],
+                        ),
                       ],
                     ),
                     const Spacer(),

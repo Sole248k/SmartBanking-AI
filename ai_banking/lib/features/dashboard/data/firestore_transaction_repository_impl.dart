@@ -20,10 +20,9 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
           .collection('accounts')
           .where('userId', isEqualTo: _uid)
           .get();
-      final accounts = snapshot.docs.map((doc) => Account.fromJson({
-        ...doc.data(),
-        'id': doc.id,
-      })).toList();
+      final accounts = snapshot.docs
+          .map((doc) => Account.fromJson({...doc.data(), 'id': doc.id}))
+          .toList();
       return right(accounts);
     } catch (e) {
       return left(ServerFailure(e.toString()));
@@ -38,28 +37,31 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
         .where('userId', isEqualTo: _uid)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Account.fromJson({
-        ...doc.data(),
-        'id': doc.id,
-      })).toList();
-    });
+          return snapshot.docs
+              .map((doc) => Account.fromJson({...doc.data(), 'id': doc.id}))
+              .toList();
+        });
   }
 
   @override
-  Future<Either<Failure, void>> addFunds(String accountId, double amount) async {
+  Future<Either<Failure, void>> addFunds(
+    String accountId,
+    double amount,
+  ) async {
     try {
       if (_uid == null) return left(const AuthFailure('User not logged in'));
       final accountRef = _firestore.collection('accounts').doc(accountId);
-      
+
       await _firestore.runTransaction((transaction) async {
         final snapshot = await transaction.get(accountRef);
         if (snapshot.exists) {
-          final currentBalance = (snapshot.data()!['balance'] as num).toDouble();
+          final currentBalance = (snapshot.data()!['balance'] as num)
+              .toDouble();
           transaction.update(accountRef, {
             'balance': currentBalance + amount,
             'availableBalance': currentBalance + amount,
           });
-          
+
           // Log a "Top-up" transaction
           final transactionsRef = _firestore.collection('transactions').doc();
           transaction.set(transactionsRef, {
@@ -82,7 +84,9 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<Either<Failure, List<Transaction>>> getRecentTransactions({int limit = 10}) async {
+  Future<Either<Failure, List<Transaction>>> getRecentTransactions({
+    int limit = 10,
+  }) async {
     try {
       if (_uid == null) return left(const AuthFailure('User not logged in'));
       final snapshot = await _firestore
@@ -91,13 +95,19 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
           .orderBy('date', descending: true)
           .limit(limit)
           .get();
-          
-      final transactions = snapshot.docs.map((doc) => Transaction.fromJson({
-        ...doc.data(),
-        'id': doc.id,
-        'date': (doc.data()['date'] as Timestamp).toDate().toIso8601String(),
-      })).toList();
-      
+
+      final transactions = snapshot.docs
+          .map(
+            (doc) => Transaction.fromJson({
+              ...doc.data(),
+              'id': doc.id,
+              'date': (doc.data()['date'] as Timestamp)
+                  .toDate()
+                  .toIso8601String(),
+            }),
+          )
+          .toList();
+
       return right(transactions);
     } catch (e) {
       return left(ServerFailure(e.toString()));
@@ -114,12 +124,18 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
         .limit(limit)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Transaction.fromJson({
-        ...doc.data(),
-        'id': doc.id,
-        'date': (doc.data()['date'] as Timestamp).toDate().toIso8601String(),
-      })).toList();
-    });
+          return snapshot.docs
+              .map(
+                (doc) => Transaction.fromJson({
+                  ...doc.data(),
+                  'id': doc.id,
+                  'date': (doc.data()['date'] as Timestamp)
+                      .toDate()
+                      .toIso8601String(),
+                }),
+              )
+              .toList();
+        });
   }
 
   @override
@@ -127,11 +143,8 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
     try {
       final doc = await _firestore.collection('accounts').doc(id).get();
       if (!doc.exists) return left(const ServerFailure('Account not found'));
-      
-      return right(Account.fromJson({
-        ...doc.data()!,
-        'id': doc.id,
-      }));
+
+      return right(Account.fromJson({...doc.data()!, 'id': doc.id}));
     } catch (e) {
       return left(ServerFailure(e.toString()));
     }

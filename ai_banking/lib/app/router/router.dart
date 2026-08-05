@@ -11,9 +11,11 @@ import '../../features/transfer/presentation/add_beneficiary_screen.dart';
 import '../../features/payments/presentation/bill_payment_screen.dart';
 import '../../features/dashboard/design_system_screen.dart';
 import '../../features/transfer/presentation/transfer_screen.dart';
+import '../../features/qr/presentation/qr_hub_screen.dart';
 import '../../features/qr/presentation/qr_scanner_screen.dart';
 import '../../features/qr/presentation/my_qr_screen.dart';
 import '../../features/qr/presentation/request_money_screen.dart';
+import '../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../features/wallet/presentation/wallet_screen.dart';
 import '../../features/wallet/presentation/top_up_screen.dart';
 import '../../features/analytics/presentation/analytics_screen.dart';
@@ -40,9 +42,10 @@ GoRouter router(RouterRef ref) {
       if (authState.isLoading) return null;
 
       final user = authState.value;
-      final isAuthRoute = state.matchedLocation == '/login' || 
-                          state.matchedLocation == '/register' || 
-                          state.matchedLocation == '/welcome';
+      final isAuthRoute =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register' ||
+          state.matchedLocation == '/welcome';
 
       if (user == null) {
         // Not logged in -> only allow auth routes
@@ -61,10 +64,7 @@ GoRouter router(RouterRef ref) {
         path: '/welcome',
         builder: (context, state) => const WelcomeScreen(),
       ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
@@ -75,16 +75,9 @@ GoRouter router(RouterRef ref) {
           return Scaffold(
             key: const ValueKey('shell_scaffold'),
             body: child,
-            bottomNavigationBar: BottomNavigationBar(
+            bottomNavigationBar: AppBottomNavBar(
               currentIndex: _calculateSelectedIndex(state.fullPath ?? '/'),
               onTap: (index) => _onItemTapped(index, context),
-              type: BottomNavigationBarType.fixed,
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Home'),
-                BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
-                BottomNavigationBarItem(icon: Icon(Icons.bar_chart_rounded), label: 'Analytics'),
-                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-              ],
             ),
           );
         },
@@ -137,6 +130,10 @@ GoRouter router(RouterRef ref) {
             ],
           ),
           GoRoute(
+            path: '/qr',
+            builder: (context, state) => const QrHubScreen(),
+          ),
+          GoRoute(
             path: '/wallet',
             builder: (context, state) => const WalletScreen(),
             routes: [
@@ -174,9 +171,17 @@ GoRouter router(RouterRef ref) {
 int _calculateSelectedIndex(String location) {
   if (location == '/') return 0;
   if (location.startsWith('/wallet')) return 1;
-  if (location.startsWith('/analytics')) return 2;
-  if (location.startsWith('/profile')) return 3;
+  if (_isQrRoute(location)) return 2;
+  if (location.startsWith('/analytics')) return 3;
+  if (location.startsWith('/profile')) return 4;
   return 0;
+}
+
+bool _isQrRoute(String location) {
+  return location.startsWith('/qr') ||
+      location.startsWith('/qr-scanner') ||
+      location.startsWith('/my-qr') ||
+      location.startsWith('/request-money');
 }
 
 void _onItemTapped(int index, BuildContext context) {
@@ -188,9 +193,12 @@ void _onItemTapped(int index, BuildContext context) {
       context.go('/wallet');
       break;
     case 2:
-      context.go('/analytics');
+      context.go('/qr');
       break;
     case 3:
+      context.go('/analytics');
+      break;
+    case 4:
       context.go('/profile');
       break;
   }

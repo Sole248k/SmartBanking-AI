@@ -16,9 +16,7 @@ class WalletScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Wallet'),
-      ),
+      appBar: AppBar(title: const Text('My Wallet')),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(walletControllerProvider);
@@ -42,7 +40,9 @@ class WalletScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'Total Balance',
-                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white70,
+                        ),
                       ),
                       const SizedBox(height: AppConstants.sm),
                       Text(
@@ -55,7 +55,11 @@ class WalletScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                loading: () => const AppShimmer(width: double.infinity, height: 160, borderRadius: AppConstants.radiusXl),
+                loading: () => const AppShimmer(
+                  width: double.infinity,
+                  height: 160,
+                  borderRadius: AppConstants.radiusXl,
+                ),
                 error: (err, stack) => Text('Error: $err'),
               ),
               const SizedBox(height: AppConstants.xl),
@@ -82,7 +86,9 @@ class WalletScreen extends ConsumerWidget {
               const SizedBox(height: AppConstants.xxl),
               Text(
                 'Wallet History',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: AppConstants.md),
               AppCard(
@@ -91,7 +97,11 @@ class WalletScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(AppConstants.xl),
                     child: Column(
                       children: [
-                        Icon(Icons.history_rounded, size: 48, color: Colors.grey[300]),
+                        Icon(
+                          Icons.history_rounded,
+                          size: 48,
+                          color: Colors.grey[300],
+                        ),
                         const SizedBox(height: AppConstants.md),
                         const Text(
                           'No wallet transactions yet',
