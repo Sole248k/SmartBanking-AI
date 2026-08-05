@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../providers/budget_providers.dart';
 
@@ -45,7 +46,7 @@ class BudgetListScreen extends ConsumerWidget {
                             style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            '₱${budget.spentAmount.toStringAsFixed(0)} / ₱${budget.limitAmount.toStringAsFixed(0)}',
+                            '${CurrencyFormatter.noDecimal(budget.spentAmount)} / ${CurrencyFormatter.noDecimal(budget.limitAmount)}',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: isOver ? theme.colorScheme.error : null,
                               fontWeight: FontWeight.w600,
@@ -68,8 +69,8 @@ class BudgetListScreen extends ConsumerWidget {
                       const SizedBox(height: AppConstants.xs),
                       Text(
                         isOver 
-                          ? 'You have exceeded your budget by ₱${(budget.spentAmount - budget.limitAmount).toStringAsFixed(0)}'
-                          : '₱${(budget.limitAmount - budget.spentAmount).toStringAsFixed(0)} remaining',
+                          ? 'You have exceeded your budget by ${CurrencyFormatter.noDecimal(budget.spentAmount - budget.limitAmount)}'
+                          : '${CurrencyFormatter.noDecimal(budget.limitAmount - budget.spentAmount)} remaining',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: isOver ? theme.colorScheme.error : Colors.grey,
                         ),

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_list_tile.dart';
 import '../../../shared/widgets/privacy_sensitive_text.dart';
 import '../models/transaction.dart';
+
+import 'package:go_router/go_router.dart';
 
 class TransactionItem extends StatelessWidget {
 
@@ -15,16 +18,23 @@ class TransactionItem extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AppListTile(
-      title: Text(transaction.title),
+      onTap: () => context.push('/transactions/details', extra: transaction),
+      title: Text(
+        transaction.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: Text(
         '${DateFormat('MMM d, h:mm a').format(transaction.date)} • ${transaction.category}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
       leading: Icon(
         _getCategoryIcon(transaction.category),
         color: theme.colorScheme.primary,
       ),
       trailing: PrivacySensitiveText(
-        '${isDebit ? '-' : '+'} ₱${transaction.amount.toStringAsFixed(2)}',
+        '${isDebit ? '-' : '+'} ${CurrencyFormatter.format(transaction.amount)}',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           color: isDebit ? null : Colors.green,

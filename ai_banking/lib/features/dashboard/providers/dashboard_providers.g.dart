@@ -41,7 +41,7 @@ final dashboardAccountsProvider =
 
 typedef DashboardAccountsRef = AutoDisposeStreamProviderRef<List<Account>>;
 String _$recentTransactionsHash() =>
-    r'365373d7a77b4670015b52913f7be3aba06b056e';
+    r'fa4816c36b99b9d440e12c1c68b43ea4e2105c73';
 
 /// See also [recentTransactions].
 @ProviderFor(recentTransactions)

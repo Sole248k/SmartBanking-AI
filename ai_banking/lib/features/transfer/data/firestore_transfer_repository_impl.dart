@@ -59,61 +59,136 @@ class FirestoreTransferRepositoryImpl implements TransferRepository {
   }
 
   @override
+  Future<Either<Failure, RecipientDetails?>> lookupRecipient(String query) async {
+    try {
+      final cleanQuery = query.trim();
+      if (cleanQuery.isEmpty) return right(null);
+
+      // 1. Search accounts by accountNumber
+      var snapshot = await _firestore
+          .collection('accounts')
+          .where('accountNumber', isEqualTo: cleanQuery)
+          .limit(1)
+          .get();
+
+      // 2. Search accounts by cardNumber if not found
+      if (snapshot.docs.isEmpty) {
+        snapshot = await _firestore
+            .collection('accounts')
+            .where('cardNumber', isEqualTo: cleanQuery)
+            .limit(1)
+            .get();
+      }
+
+      if (snapshot.docs.isEmpty) return right(null);
+
+      final doc = snapshot.docs.first;
+      final data = doc.data();
+      final userId = data['userId'] as String? ?? '';
+
+      // Fetch user full name from users collection if available
+      String recipientName = data['holderName'] as String? ?? 'SmartBank User';
+      if (userId.isNotEmpty) {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists && userDoc.data()?['fullName'] != null) {
+          recipientName = userDoc.data()!['fullName'] as String;
+        }
+      }
+
+      final rawCardNum = data['cardNumber'] as String? ?? data['accountNumber'] as String? ?? '';
+      final masked = rawCardNum.length >= 4
+          ? '**** **** **** ${rawCardNum.substring(rawCardNum.length - 4)}'
+          : rawCardNum;
+
+      return right(RecipientDetails(
+        accountId: doc.id,
+        userId: userId,
+        recipientName: recipientName,
+        bankName: data['bankName'] as String? ?? 'SmartBank AI',
+        accountNumber: data['accountNumber'] as String? ?? doc.id,
+        maskedCardNumber: masked,
+        cardNetwork: data['cardNetwork'] as String? ?? 'visa',
+      ));
+    } catch (e) {
+      return left(ServerFailure('Recipient lookup failed: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> executeTransfer({
     required String fromAccountId,
-    required String beneficiaryId,
+    required String recipientName,
+    required String recipientAccountNumber,
+    required String bankName,
     required double amount,
     String? note,
+    String? beneficiaryId,
+    bool saveAsBeneficiary = false,
   }) async {
     try {
       final senderUid = _uid;
       if (senderUid == null) return left(const AuthFailure('User not logged in'));
 
-      // 1. Fetch Beneficiary
-      final beneficiaryDoc = await _firestore.collection('beneficiaries').doc(beneficiaryId).get();
-      if (!beneficiaryDoc.exists) return left(const ServerFailure('Beneficiary not found'));
-      
-      final beneficiaryData = beneficiaryDoc.data();
-      if (beneficiaryData == null) return left(const ServerFailure('Beneficiary data is empty'));
+      final String targetName = recipientName.trim();
+      final String targetAccountNumber = recipientAccountNumber.trim();
+      final String targetBank = bankName.trim();
 
-      final String targetAccountNumber = beneficiaryData['accountNumber'] ?? '';
-      final String targetName = beneficiaryData['name'] ?? 'Unknown Recipient';
-      final String targetBank = beneficiaryData['bankName'] ?? 'External Bank';
+      // Optionally save as beneficiary if requested
+      if (saveAsBeneficiary && beneficiaryId == null) {
+        await addBeneficiary(Beneficiary(
+          id: '',
+          userId: senderUid,
+          name: targetName,
+          accountNumber: targetAccountNumber,
+          bankName: targetBank,
+        ));
+      }
 
       final senderAccountRef = _firestore.collection('accounts').doc(fromAccountId);
       final transactionsRef = _firestore.collection('transactions');
 
-      // 2. Detect if it's a SmartBank P2P transfer (PRE-READ)
-      final bool isSmartBank = targetBank.toLowerCase().contains('smartbank');
+      // Shared Reference Number
+      final refCode = 'REF-${DateTime.now().millisecondsSinceEpoch.toString().substring(4)}';
+
+      // Detect if recipient account exists in database (Internal or Inter-user P2P)
       DocumentReference? recipientAccountRef;
       String? recipientUserId;
 
-      if (isSmartBank) {
-        final recipientQuery = await _firestore
+      final recipientQuery = await _firestore
+          .collection('accounts')
+          .where('accountNumber', isEqualTo: targetAccountNumber)
+          .limit(1)
+          .get();
+
+      if (recipientQuery.docs.isNotEmpty) {
+        final recipientDoc = recipientQuery.docs.first;
+        final recipientData = recipientDoc.data();
+        recipientAccountRef = recipientDoc.reference;
+        recipientUserId = recipientData['userId'] as String?;
+      } else {
+        // Try searching by cardNumber
+        final cardQuery = await _firestore
             .collection('accounts')
-            .where('accountNumber', isEqualTo: targetAccountNumber)
+            .where('cardNumber', isEqualTo: targetAccountNumber)
             .limit(1)
             .get();
-            
-        if (recipientQuery.docs.isNotEmpty) {
-          final recipientDoc = recipientQuery.docs.first;
-          final recipientData = recipientDoc.data() as Map<String, dynamic>?;
-          recipientAccountRef = recipientDoc.reference;
-          recipientUserId = recipientData?['userId'] as String?;
+
+        if (cardQuery.docs.isNotEmpty) {
+          final cardDoc = cardQuery.docs.first;
+          final cardData = cardDoc.data();
+          recipientAccountRef = cardDoc.reference;
+          recipientUserId = cardData['userId'] as String?;
         }
       }
 
-      // 3. Execute Atomic Transaction
+      // Execute Atomic Transaction
       await _firestore.runTransaction((transaction) async {
-        // --- ALL READS MUST HAPPEN FIRST ---
-        
-        // Read Sender
+        // --- READS ---
         final senderSnapshot = await transaction.get(senderAccountRef);
         if (!senderSnapshot.exists) throw 'Sender account not found';
-        final senderData = senderSnapshot.data();
+        final senderData = senderSnapshot.data() as Map<String, dynamic>?;
         final senderBalance = (senderData?['balance'] as num?)?.toDouble() ?? 0.0;
 
-        // Read Recipient (If P2P)
         double recipientBalance = 0.0;
         if (recipientAccountRef != null) {
           final recipientSnapshot = await transaction.get(recipientAccountRef);
@@ -124,44 +199,68 @@ class FirestoreTransferRepositoryImpl implements TransferRepository {
         }
 
         // --- VALIDATION ---
-        if (senderBalance < amount) throw 'Insufficient funds';
+        if (senderBalance < amount) throw 'Insufficient available balance';
 
-        // --- ALL WRITES MUST HAPPEN LAST ---
+        // --- WRITES ---
 
-        // Update Sender Balance
-        transaction.update(senderAccountRef, {'balance': (senderBalance - amount).toDouble()});
+        // 1. Debit Sender
+        final newSenderBal = (senderBalance - amount).toDouble();
+        transaction.update(senderAccountRef, {
+          'balance': newSenderBal,
+          'availableBalance': newSenderBal,
+        });
 
-        // Log Sender Transaction (Debit)
+        // 2. Log Sender Debit Transaction
+        final senderAccNum = (senderData?['accountNumber'] as String?) ?? (senderData?['cardNumber'] as String?) ?? '';
+        final senderBankName = (senderData?['bankName'] as String?) ?? 'SmartBank AI';
+        final senderFullName = _auth.currentUser?.displayName ?? 'SmartBank User';
+
         transaction.set(transactionsRef.doc(), {
           'userId': senderUid,
           'accountId': fromAccountId,
           'title': 'Transfer to $targetName',
-          'description': note ?? 'P2P Transfer',
+          'description': note ?? 'Fund Transfer ($refCode)',
           'amount': amount.toDouble(),
           'date': FieldValue.serverTimestamp(),
           'category': 'Transfer',
           'status': 'completed',
           'type': 'debit',
+          'senderName': senderFullName,
+          'senderAccount': senderAccNum,
+          'senderBank': senderBankName,
+          'recipientName': targetName,
           'targetBank': targetBank,
           'targetAccount': targetAccountNumber,
+          'referenceNumber': refCode,
         });
 
-        // Update Recipient (If P2P)
+        // 3. Credit Recipient (if found in ecosystem)
         if (recipientAccountRef != null && recipientUserId != null) {
-          transaction.update(recipientAccountRef, {'balance': (recipientBalance + amount).toDouble()});
+          final newRecipientBal = (recipientBalance + amount).toDouble();
+          transaction.update(recipientAccountRef, {
+            'balance': newRecipientBal,
+            'availableBalance': newRecipientBal,
+          });
 
-          // Log Recipient Transaction (Credit)
+          // Log Recipient Credit Transaction
           transaction.set(transactionsRef.doc(), {
             'userId': recipientUserId,
             'accountId': recipientAccountRef.id,
-            'title': 'Received from ${_auth.currentUser?.displayName ?? 'SmartBank User'}',
-            'description': note ?? 'Incoming P2P',
+            'title': 'Received from $senderFullName',
+            'description': note ?? 'Incoming Transfer ($refCode)',
             'amount': amount.toDouble(),
             'date': FieldValue.serverTimestamp(),
             'category': 'Transfer',
             'status': 'completed',
             'type': 'credit',
             'senderId': senderUid,
+            'senderName': senderFullName,
+            'senderAccount': senderAccNum,
+            'senderBank': senderBankName,
+            'recipientName': targetName,
+            'targetBank': targetBank,
+            'targetAccount': targetAccountNumber,
+            'referenceNumber': refCode,
           });
         }
       });
@@ -170,7 +269,6 @@ class FirestoreTransferRepositoryImpl implements TransferRepository {
     } on FirebaseException catch (e) {
       return left(ServerFailure('Firebase Error [${e.code}]: ${e.message}'));
     } catch (e) {
-      // Catch specific transaction failures
       return left(ServerFailure('Transfer Failed: $e'));
     }
   }

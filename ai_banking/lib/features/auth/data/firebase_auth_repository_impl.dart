@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:local_auth/local_auth.dart';
@@ -15,21 +16,33 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<bool> isBiometricsAvailable() async {
-    final bool canAuthenticateWithBiometrics = await _localAuth.canCheckBiometrics;
-    final bool canAuthenticate = canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
-    return canAuthenticate;
+    if (kIsWeb) return false;
+    try {
+      final bool canAuthenticateWithBiometrics = await _localAuth.canCheckBiometrics;
+      final bool canAuthenticate = canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
+      return canAuthenticate;
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
   Future<Either<Failure, bool>> authenticateWithBiometrics() async {
+    if (kIsWeb) {
+      return left(const AuthFailure('Biometrics not supported on Web. Please enter your PIN.'));
+    }
     try {
+      final available = await isBiometricsAvailable();
+      if (!available) {
+        return left(const AuthFailure('Biometrics unavailable. Please enter your PIN.'));
+      }
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: 'Please authenticate to access your account',
         biometricOnly: true,
       );
       return right(didAuthenticate);
     } catch (e) {
-      return left(AuthFailure('Biometric authentication failed: $e'));
+      return left(const AuthFailure('Biometrics unavailable. Please enter your PIN.'));
     }
   }
 

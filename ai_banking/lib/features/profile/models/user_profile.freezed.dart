@@ -28,6 +28,10 @@ mixin _$UserProfile {
   bool get isBiometricEnabled => throw _privateConstructorUsedError;
   bool get pushNotificationsEnabled => throw _privateConstructorUsedError;
   String get kycStatus => throw _privateConstructorUsedError;
+  String? get pinHash => throw _privateConstructorUsedError;
+  String? get pinCreatedAt => throw _privateConstructorUsedError;
+  int get pinAttempts => throw _privateConstructorUsedError;
+  String? get pinLockedUntil => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -49,7 +53,11 @@ abstract class $UserProfileCopyWith<$Res> {
       String? avatarUrl,
       bool isBiometricEnabled,
       bool pushNotificationsEnabled,
-      String kycStatus});
+      String kycStatus,
+      String? pinHash,
+      String? pinCreatedAt,
+      int pinAttempts,
+      String? pinLockedUntil});
 }
 
 /// @nodoc
@@ -73,6 +81,10 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
     Object? isBiometricEnabled = null,
     Object? pushNotificationsEnabled = null,
     Object? kycStatus = null,
+    Object? pinHash = freezed,
+    Object? pinCreatedAt = freezed,
+    Object? pinAttempts = null,
+    Object? pinLockedUntil = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -107,6 +119,22 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
           ? _value.kycStatus
           : kycStatus // ignore: cast_nullable_to_non_nullable
               as String,
+      pinHash: freezed == pinHash
+          ? _value.pinHash
+          : pinHash // ignore: cast_nullable_to_non_nullable
+              as String?,
+      pinCreatedAt: freezed == pinCreatedAt
+          ? _value.pinCreatedAt
+          : pinCreatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      pinAttempts: null == pinAttempts
+          ? _value.pinAttempts
+          : pinAttempts // ignore: cast_nullable_to_non_nullable
+              as int,
+      pinLockedUntil: freezed == pinLockedUntil
+          ? _value.pinLockedUntil
+          : pinLockedUntil // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -127,7 +155,11 @@ abstract class _$$UserProfileImplCopyWith<$Res>
       String? avatarUrl,
       bool isBiometricEnabled,
       bool pushNotificationsEnabled,
-      String kycStatus});
+      String kycStatus,
+      String? pinHash,
+      String? pinCreatedAt,
+      int pinAttempts,
+      String? pinLockedUntil});
 }
 
 /// @nodoc
@@ -149,6 +181,10 @@ class __$$UserProfileImplCopyWithImpl<$Res>
     Object? isBiometricEnabled = null,
     Object? pushNotificationsEnabled = null,
     Object? kycStatus = null,
+    Object? pinHash = freezed,
+    Object? pinCreatedAt = freezed,
+    Object? pinAttempts = null,
+    Object? pinLockedUntil = freezed,
   }) {
     return _then(_$UserProfileImpl(
       id: null == id
@@ -183,6 +219,22 @@ class __$$UserProfileImplCopyWithImpl<$Res>
           ? _value.kycStatus
           : kycStatus // ignore: cast_nullable_to_non_nullable
               as String,
+      pinHash: freezed == pinHash
+          ? _value.pinHash
+          : pinHash // ignore: cast_nullable_to_non_nullable
+              as String?,
+      pinCreatedAt: freezed == pinCreatedAt
+          ? _value.pinCreatedAt
+          : pinCreatedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      pinAttempts: null == pinAttempts
+          ? _value.pinAttempts
+          : pinAttempts // ignore: cast_nullable_to_non_nullable
+              as int,
+      pinLockedUntil: freezed == pinLockedUntil
+          ? _value.pinLockedUntil
+          : pinLockedUntil // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -198,7 +250,11 @@ class _$UserProfileImpl implements _UserProfile {
       this.avatarUrl,
       this.isBiometricEnabled = false,
       this.pushNotificationsEnabled = false,
-      this.kycStatus = 'Verified'});
+      this.kycStatus = 'Not Started',
+      this.pinHash,
+      this.pinCreatedAt,
+      this.pinAttempts = 0,
+      this.pinLockedUntil});
 
   factory _$UserProfileImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserProfileImplFromJson(json);
@@ -222,10 +278,19 @@ class _$UserProfileImpl implements _UserProfile {
   @override
   @JsonKey()
   final String kycStatus;
+  @override
+  final String? pinHash;
+  @override
+  final String? pinCreatedAt;
+  @override
+  @JsonKey()
+  final int pinAttempts;
+  @override
+  final String? pinLockedUntil;
 
   @override
   String toString() {
-    return 'UserProfile(id: $id, fullName: $fullName, email: $email, phoneNumber: $phoneNumber, avatarUrl: $avatarUrl, isBiometricEnabled: $isBiometricEnabled, pushNotificationsEnabled: $pushNotificationsEnabled, kycStatus: $kycStatus)';
+    return 'UserProfile(id: $id, fullName: $fullName, email: $email, phoneNumber: $phoneNumber, avatarUrl: $avatarUrl, isBiometricEnabled: $isBiometricEnabled, pushNotificationsEnabled: $pushNotificationsEnabled, kycStatus: $kycStatus, pinHash: $pinHash, pinCreatedAt: $pinCreatedAt, pinAttempts: $pinAttempts, pinLockedUntil: $pinLockedUntil)';
   }
 
   @override
@@ -247,13 +312,32 @@ class _$UserProfileImpl implements _UserProfile {
                     other.pushNotificationsEnabled, pushNotificationsEnabled) ||
                 other.pushNotificationsEnabled == pushNotificationsEnabled) &&
             (identical(other.kycStatus, kycStatus) ||
-                other.kycStatus == kycStatus));
+                other.kycStatus == kycStatus) &&
+            (identical(other.pinHash, pinHash) || other.pinHash == pinHash) &&
+            (identical(other.pinCreatedAt, pinCreatedAt) ||
+                other.pinCreatedAt == pinCreatedAt) &&
+            (identical(other.pinAttempts, pinAttempts) ||
+                other.pinAttempts == pinAttempts) &&
+            (identical(other.pinLockedUntil, pinLockedUntil) ||
+                other.pinLockedUntil == pinLockedUntil));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, fullName, email, phoneNumber,
-      avatarUrl, isBiometricEnabled, pushNotificationsEnabled, kycStatus);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      fullName,
+      email,
+      phoneNumber,
+      avatarUrl,
+      isBiometricEnabled,
+      pushNotificationsEnabled,
+      kycStatus,
+      pinHash,
+      pinCreatedAt,
+      pinAttempts,
+      pinLockedUntil);
 
   @JsonKey(ignore: true)
   @override
@@ -278,7 +362,11 @@ abstract class _UserProfile implements UserProfile {
       final String? avatarUrl,
       final bool isBiometricEnabled,
       final bool pushNotificationsEnabled,
-      final String kycStatus}) = _$UserProfileImpl;
+      final String kycStatus,
+      final String? pinHash,
+      final String? pinCreatedAt,
+      final int pinAttempts,
+      final String? pinLockedUntil}) = _$UserProfileImpl;
 
   factory _UserProfile.fromJson(Map<String, dynamic> json) =
       _$UserProfileImpl.fromJson;
@@ -299,6 +387,14 @@ abstract class _UserProfile implements UserProfile {
   bool get pushNotificationsEnabled;
   @override
   String get kycStatus;
+  @override
+  String? get pinHash;
+  @override
+  String? get pinCreatedAt;
+  @override
+  int get pinAttempts;
+  @override
+  String? get pinLockedUntil;
   @override
   @JsonKey(ignore: true)
   _$$UserProfileImplCopyWith<_$UserProfileImpl> get copyWith =>

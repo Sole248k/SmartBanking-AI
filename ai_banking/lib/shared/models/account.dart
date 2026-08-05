@@ -3,8 +3,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'account.freezed.dart';
 part 'account.g.dart';
 
-enum AccountType { checking, savings, investment, credit, virtual }
-enum CardNetwork { visa, mastercard, amex, discovery }
+enum AccountType { checking, savings, investment, credit, virtual, prepaid }
+enum CardNetwork { visa, mastercard, amex, discover, discovery, jcb, unionpay }
 enum AccountStatus { active, frozen, closed }
 
 @freezed
@@ -25,6 +25,12 @@ class Account with _$Account {
     @Default(AccountStatus.active) AccountStatus status,
     @Default(CardNetwork.visa) CardNetwork cardNetwork,
     @Default(['#0A84FF', '#5E5CE6']) List<String> cardGradientColors,
+    @Default(false) bool isDefault,
+    String? nickname,
+    @Default('SmartBank') String bankName,
+    String? linkedAt,
+    String? billingAddress,
+    @Default(false) bool isExternal,
   }) = _Account;
 
   factory Account.fromJson(Map<String, dynamic> json) => _$AccountFromJson(json);

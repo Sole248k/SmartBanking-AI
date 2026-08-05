@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/constants/app_constants.dart';
 import '../models/transfer_state.dart';
 import '../providers/transfer_providers.dart';
-import 'widgets/beneficiary_selector.dart';
-import 'widgets/amount_entry.dart';
+import 'widgets/transfer_form.dart';
 import 'widgets/transfer_confirmation.dart';
 import 'widgets/transfer_success.dart';
 
@@ -25,7 +24,7 @@ class TransferScreen extends ConsumerWidget {
             : IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {
-                  if (transferState.step == TransferStep.selectBeneficiary) {
+                  if (transferState.step == TransferStep.form) {
                     context.pop();
                   } else {
                     controller.back();
@@ -42,10 +41,8 @@ class TransferScreen extends ConsumerWidget {
 
   Widget _buildStep(TransferStep step) {
     switch (step) {
-      case TransferStep.selectBeneficiary:
-        return const BeneficiarySelector();
-      case TransferStep.enterAmount:
-        return const AmountEntry();
+      case TransferStep.form:
+        return const TransferForm();
       case TransferStep.confirm:
         return const TransferConfirmation();
       case TransferStep.success:

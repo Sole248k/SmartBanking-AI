@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../core/utils/chart_utils.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../providers/analytics_providers.dart';
 import 'widgets/spending_pie_chart.dart';
@@ -109,7 +110,7 @@ class _LegendItem extends StatelessWidget {
           Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: AppConstants.sm),
           Expanded(child: Text(label, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis)),
-          Text('₱${amount.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(CurrencyFormatter.noDecimal(amount), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -133,7 +134,7 @@ class _SummaryCard extends StatelessWidget {
           Text(label, style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey)),
           const SizedBox(height: AppConstants.xs),
           Text(
-            '₱${amount.toStringAsFixed(2)}',
+            CurrencyFormatter.format(amount),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: color,

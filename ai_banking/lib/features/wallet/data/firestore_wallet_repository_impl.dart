@@ -45,48 +45,72 @@ class FirestoreWalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<Either<Failure, Wallet>> topUp(double amount, String fromAccountId) async {
+  Future<Either<Failure, Wallet>> topUp(double amount, String targetAccountId) async {
     try {
       if (_uid == null) return left(const AuthFailure('User not logged in'));
-      
-      final walletQuery = await _firestore.collection('wallets').where('userId', isEqualTo: _uid).limit(1).get();
-      if (walletQuery.docs.isEmpty) throw Exception('Wallet not found');
-      
-      final walletRef = walletQuery.docs.first.reference;
-      final accountRef = _firestore.collection('accounts').doc(fromAccountId);
+
+      final userAccountsSnapshot = await _firestore
+          .collection('accounts')
+          .where('userId', isEqualTo: _uid)
+          .get();
+
+      if (userAccountsSnapshot.docs.isEmpty) {
+        return left(const ServerFailure('No banking accounts found in database for user.'));
+      }
+
+      DocumentSnapshot? targetDoc;
+      if (targetAccountId.isNotEmpty) {
+        targetDoc = userAccountsSnapshot.docs
+            .where((doc) => doc.id == targetAccountId)
+            .firstOrNull;
+      }
+
+      targetDoc ??= userAccountsSnapshot.docs
+          .where((doc) => doc.data()['isExternal'] != true)
+          .firstOrNull ?? userAccountsSnapshot.docs.first;
+
+      final accountRef = targetDoc.reference;
+      final actualAccountId = targetDoc.id;
+
       final transactionsRef = _firestore.collection('transactions');
 
       await _firestore.runTransaction((transaction) async {
-        final walletSnapshot = await transaction.get(walletRef);
+        // --- 1. READS (Must occur before ANY writes) ---
         final accountSnapshot = await transaction.get(accountRef);
+        if (!accountSnapshot.exists) throw Exception('SmartBank card/account not found in database');
 
-        if (!accountSnapshot.exists) throw Exception('Source account not found');
-        
-        final currentAccountBalance = (accountSnapshot.data()!['balance'] as num).toDouble();
-        if (currentAccountBalance < amount) throw Exception('Insufficient funds in bank account');
+        final accountData = accountSnapshot.data() as Map<String, dynamic>?;
+        final currentAccountBalance =
+            (accountData?['balance'] as num?)?.toDouble() ?? 0.0;
+        final newBalance = currentAccountBalance + amount;
 
-        // 1. Subtract from source bank account
-        transaction.update(accountRef, {'balance': currentAccountBalance - amount});
+        // --- 2. WRITES ---
+        // Credit target card balance in accounts collection
+        transaction.update(accountRef, {
+          'balance': newBalance,
+          'availableBalance': newBalance,
+        });
 
-        // 2. Add to wallet
-        final currentWalletBalance = (walletSnapshot.data()!['balance'] as num).toDouble();
-        transaction.update(walletRef, {'balance': currentWalletBalance + amount});
-
-        // 3. Create transaction record
+        // Create Top-Up Deposit transaction record
+        final refCode = 'REF-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
         transaction.set(transactionsRef.doc(), {
           'userId': _uid,
-          'accountId': fromAccountId,
-          'title': 'Wallet Top-up',
-          'description': 'From bank account',
+          'accountId': actualAccountId,
+          'title': 'Top-Up Deposit',
+          'description': 'SmartBank AI Card deposit ($refCode)',
           'amount': amount,
           'date': FieldValue.serverTimestamp(),
-          'category': 'Wallet',
+          'category': 'Deposit',
           'status': 'completed',
-          'type': 'debit',
+          'type': 'credit',
+          'referenceNumber': refCode,
+          'targetAccount': accountData?['accountNumber'] ?? accountData?['cardNumber'] ?? '',
+          'targetBank': 'SmartBank AI',
+          'authMethod': 'Security PIN',
         });
       });
 
-      return getWallet();
+      return right(Wallet(id: 'main', userId: _uid!, balance: 0.0, currency: 'PHP', linkedAccountIds: []));
     } catch (e) {
       return left(ServerFailure(e.toString()));
     }

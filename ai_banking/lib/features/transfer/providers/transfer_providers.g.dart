@@ -23,7 +23,7 @@ final transferRepositoryProvider =
 );
 
 typedef TransferRepositoryRef = AutoDisposeProviderRef<TransferRepository>;
-String _$beneficiariesHash() => r'432e7fe11a9569a78b1a0164b4b228f2de0d82be';
+String _$beneficiariesHash() => r'135272453fdccfaf33afc0b1bddfe5637fdad44f';
 
 /// See also [beneficiaries].
 @ProviderFor(beneficiaries)
@@ -40,7 +40,7 @@ final beneficiariesProvider =
 
 typedef BeneficiariesRef = AutoDisposeStreamProviderRef<List<Beneficiary>>;
 String _$transferControllerHash() =>
-    r'67a87796ce4dce68f7274c3e324771a5d8c081ab';
+    r'678db45739e36a031a30073afaf642eff27974bb';
 
 /// See also [TransferController].
 @ProviderFor(TransferController)

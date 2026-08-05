@@ -30,6 +30,18 @@ mixin _$Transaction {
   String get category => throw _privateConstructorUsedError;
   TransactionStatus get status => throw _privateConstructorUsedError;
   TransactionType get type => throw _privateConstructorUsedError;
+  String? get referenceNumber => throw _privateConstructorUsedError;
+  String? get senderName => throw _privateConstructorUsedError;
+  String? get senderBank => throw _privateConstructorUsedError;
+  String? get senderAccount => throw _privateConstructorUsedError;
+  String? get recipientName => throw _privateConstructorUsedError;
+  String? get targetAccount => throw _privateConstructorUsedError;
+  String? get targetBank => throw _privateConstructorUsedError;
+  String? get note => throw _privateConstructorUsedError;
+  double? get balanceBefore => throw _privateConstructorUsedError;
+  double? get balanceAfter => throw _privateConstructorUsedError;
+  String? get authMethod => throw _privateConstructorUsedError;
+  double? get fee => throw _privateConstructorUsedError;
   String? get merchantLogoUrl => throw _privateConstructorUsedError;
   String? get location => throw _privateConstructorUsedError;
   String? get iconUrl => throw _privateConstructorUsedError;
@@ -57,6 +69,18 @@ abstract class $TransactionCopyWith<$Res> {
       String category,
       TransactionStatus status,
       TransactionType type,
+      String? referenceNumber,
+      String? senderName,
+      String? senderBank,
+      String? senderAccount,
+      String? recipientName,
+      String? targetAccount,
+      String? targetBank,
+      String? note,
+      double? balanceBefore,
+      double? balanceAfter,
+      String? authMethod,
+      double? fee,
       String? merchantLogoUrl,
       String? location,
       String? iconUrl});
@@ -85,6 +109,18 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
     Object? category = null,
     Object? status = null,
     Object? type = null,
+    Object? referenceNumber = freezed,
+    Object? senderName = freezed,
+    Object? senderBank = freezed,
+    Object? senderAccount = freezed,
+    Object? recipientName = freezed,
+    Object? targetAccount = freezed,
+    Object? targetBank = freezed,
+    Object? note = freezed,
+    Object? balanceBefore = freezed,
+    Object? balanceAfter = freezed,
+    Object? authMethod = freezed,
+    Object? fee = freezed,
     Object? merchantLogoUrl = freezed,
     Object? location = freezed,
     Object? iconUrl = freezed,
@@ -130,6 +166,54 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as TransactionType,
+      referenceNumber: freezed == referenceNumber
+          ? _value.referenceNumber
+          : referenceNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      senderName: freezed == senderName
+          ? _value.senderName
+          : senderName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      senderBank: freezed == senderBank
+          ? _value.senderBank
+          : senderBank // ignore: cast_nullable_to_non_nullable
+              as String?,
+      senderAccount: freezed == senderAccount
+          ? _value.senderAccount
+          : senderAccount // ignore: cast_nullable_to_non_nullable
+              as String?,
+      recipientName: freezed == recipientName
+          ? _value.recipientName
+          : recipientName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      targetAccount: freezed == targetAccount
+          ? _value.targetAccount
+          : targetAccount // ignore: cast_nullable_to_non_nullable
+              as String?,
+      targetBank: freezed == targetBank
+          ? _value.targetBank
+          : targetBank // ignore: cast_nullable_to_non_nullable
+              as String?,
+      note: freezed == note
+          ? _value.note
+          : note // ignore: cast_nullable_to_non_nullable
+              as String?,
+      balanceBefore: freezed == balanceBefore
+          ? _value.balanceBefore
+          : balanceBefore // ignore: cast_nullable_to_non_nullable
+              as double?,
+      balanceAfter: freezed == balanceAfter
+          ? _value.balanceAfter
+          : balanceAfter // ignore: cast_nullable_to_non_nullable
+              as double?,
+      authMethod: freezed == authMethod
+          ? _value.authMethod
+          : authMethod // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fee: freezed == fee
+          ? _value.fee
+          : fee // ignore: cast_nullable_to_non_nullable
+              as double?,
       merchantLogoUrl: freezed == merchantLogoUrl
           ? _value.merchantLogoUrl
           : merchantLogoUrl // ignore: cast_nullable_to_non_nullable
@@ -165,6 +249,18 @@ abstract class _$$TransactionImplCopyWith<$Res>
       String category,
       TransactionStatus status,
       TransactionType type,
+      String? referenceNumber,
+      String? senderName,
+      String? senderBank,
+      String? senderAccount,
+      String? recipientName,
+      String? targetAccount,
+      String? targetBank,
+      String? note,
+      double? balanceBefore,
+      double? balanceAfter,
+      String? authMethod,
+      double? fee,
       String? merchantLogoUrl,
       String? location,
       String? iconUrl});
@@ -191,6 +287,18 @@ class __$$TransactionImplCopyWithImpl<$Res>
     Object? category = null,
     Object? status = null,
     Object? type = null,
+    Object? referenceNumber = freezed,
+    Object? senderName = freezed,
+    Object? senderBank = freezed,
+    Object? senderAccount = freezed,
+    Object? recipientName = freezed,
+    Object? targetAccount = freezed,
+    Object? targetBank = freezed,
+    Object? note = freezed,
+    Object? balanceBefore = freezed,
+    Object? balanceAfter = freezed,
+    Object? authMethod = freezed,
+    Object? fee = freezed,
     Object? merchantLogoUrl = freezed,
     Object? location = freezed,
     Object? iconUrl = freezed,
@@ -236,6 +344,54 @@ class __$$TransactionImplCopyWithImpl<$Res>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as TransactionType,
+      referenceNumber: freezed == referenceNumber
+          ? _value.referenceNumber
+          : referenceNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      senderName: freezed == senderName
+          ? _value.senderName
+          : senderName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      senderBank: freezed == senderBank
+          ? _value.senderBank
+          : senderBank // ignore: cast_nullable_to_non_nullable
+              as String?,
+      senderAccount: freezed == senderAccount
+          ? _value.senderAccount
+          : senderAccount // ignore: cast_nullable_to_non_nullable
+              as String?,
+      recipientName: freezed == recipientName
+          ? _value.recipientName
+          : recipientName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      targetAccount: freezed == targetAccount
+          ? _value.targetAccount
+          : targetAccount // ignore: cast_nullable_to_non_nullable
+              as String?,
+      targetBank: freezed == targetBank
+          ? _value.targetBank
+          : targetBank // ignore: cast_nullable_to_non_nullable
+              as String?,
+      note: freezed == note
+          ? _value.note
+          : note // ignore: cast_nullable_to_non_nullable
+              as String?,
+      balanceBefore: freezed == balanceBefore
+          ? _value.balanceBefore
+          : balanceBefore // ignore: cast_nullable_to_non_nullable
+              as double?,
+      balanceAfter: freezed == balanceAfter
+          ? _value.balanceAfter
+          : balanceAfter // ignore: cast_nullable_to_non_nullable
+              as double?,
+      authMethod: freezed == authMethod
+          ? _value.authMethod
+          : authMethod // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fee: freezed == fee
+          ? _value.fee
+          : fee // ignore: cast_nullable_to_non_nullable
+              as double?,
       merchantLogoUrl: freezed == merchantLogoUrl
           ? _value.merchantLogoUrl
           : merchantLogoUrl // ignore: cast_nullable_to_non_nullable
@@ -266,6 +422,18 @@ class _$TransactionImpl implements _Transaction {
       required this.category,
       required this.status,
       required this.type,
+      this.referenceNumber,
+      this.senderName,
+      this.senderBank,
+      this.senderAccount,
+      this.recipientName,
+      this.targetAccount,
+      this.targetBank,
+      this.note,
+      this.balanceBefore,
+      this.balanceAfter,
+      this.authMethod,
+      this.fee,
       this.merchantLogoUrl,
       this.location,
       this.iconUrl});
@@ -296,6 +464,30 @@ class _$TransactionImpl implements _Transaction {
   @override
   final TransactionType type;
   @override
+  final String? referenceNumber;
+  @override
+  final String? senderName;
+  @override
+  final String? senderBank;
+  @override
+  final String? senderAccount;
+  @override
+  final String? recipientName;
+  @override
+  final String? targetAccount;
+  @override
+  final String? targetBank;
+  @override
+  final String? note;
+  @override
+  final double? balanceBefore;
+  @override
+  final double? balanceAfter;
+  @override
+  final String? authMethod;
+  @override
+  final double? fee;
+  @override
   final String? merchantLogoUrl;
   @override
   final String? location;
@@ -304,7 +496,7 @@ class _$TransactionImpl implements _Transaction {
 
   @override
   String toString() {
-    return 'Transaction(id: $id, userId: $userId, accountId: $accountId, title: $title, description: $description, amount: $amount, date: $date, category: $category, status: $status, type: $type, merchantLogoUrl: $merchantLogoUrl, location: $location, iconUrl: $iconUrl)';
+    return 'Transaction(id: $id, userId: $userId, accountId: $accountId, title: $title, description: $description, amount: $amount, date: $date, category: $category, status: $status, type: $type, referenceNumber: $referenceNumber, senderName: $senderName, senderBank: $senderBank, senderAccount: $senderAccount, recipientName: $recipientName, targetAccount: $targetAccount, targetBank: $targetBank, note: $note, balanceBefore: $balanceBefore, balanceAfter: $balanceAfter, authMethod: $authMethod, fee: $fee, merchantLogoUrl: $merchantLogoUrl, location: $location, iconUrl: $iconUrl)';
   }
 
   @override
@@ -325,6 +517,28 @@ class _$TransactionImpl implements _Transaction {
                 other.category == category) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.type, type) || other.type == type) &&
+            (identical(other.referenceNumber, referenceNumber) ||
+                other.referenceNumber == referenceNumber) &&
+            (identical(other.senderName, senderName) ||
+                other.senderName == senderName) &&
+            (identical(other.senderBank, senderBank) ||
+                other.senderBank == senderBank) &&
+            (identical(other.senderAccount, senderAccount) ||
+                other.senderAccount == senderAccount) &&
+            (identical(other.recipientName, recipientName) ||
+                other.recipientName == recipientName) &&
+            (identical(other.targetAccount, targetAccount) ||
+                other.targetAccount == targetAccount) &&
+            (identical(other.targetBank, targetBank) ||
+                other.targetBank == targetBank) &&
+            (identical(other.note, note) || other.note == note) &&
+            (identical(other.balanceBefore, balanceBefore) ||
+                other.balanceBefore == balanceBefore) &&
+            (identical(other.balanceAfter, balanceAfter) ||
+                other.balanceAfter == balanceAfter) &&
+            (identical(other.authMethod, authMethod) ||
+                other.authMethod == authMethod) &&
+            (identical(other.fee, fee) || other.fee == fee) &&
             (identical(other.merchantLogoUrl, merchantLogoUrl) ||
                 other.merchantLogoUrl == merchantLogoUrl) &&
             (identical(other.location, location) ||
@@ -334,21 +548,34 @@ class _$TransactionImpl implements _Transaction {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      userId,
-      accountId,
-      title,
-      description,
-      amount,
-      date,
-      category,
-      status,
-      type,
-      merchantLogoUrl,
-      location,
-      iconUrl);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        userId,
+        accountId,
+        title,
+        description,
+        amount,
+        date,
+        category,
+        status,
+        type,
+        referenceNumber,
+        senderName,
+        senderBank,
+        senderAccount,
+        recipientName,
+        targetAccount,
+        targetBank,
+        note,
+        balanceBefore,
+        balanceAfter,
+        authMethod,
+        fee,
+        merchantLogoUrl,
+        location,
+        iconUrl
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -376,6 +603,18 @@ abstract class _Transaction implements Transaction {
       required final String category,
       required final TransactionStatus status,
       required final TransactionType type,
+      final String? referenceNumber,
+      final String? senderName,
+      final String? senderBank,
+      final String? senderAccount,
+      final String? recipientName,
+      final String? targetAccount,
+      final String? targetBank,
+      final String? note,
+      final double? balanceBefore,
+      final double? balanceAfter,
+      final String? authMethod,
+      final double? fee,
       final String? merchantLogoUrl,
       final String? location,
       final String? iconUrl}) = _$TransactionImpl;
@@ -403,6 +642,30 @@ abstract class _Transaction implements Transaction {
   TransactionStatus get status;
   @override
   TransactionType get type;
+  @override
+  String? get referenceNumber;
+  @override
+  String? get senderName;
+  @override
+  String? get senderBank;
+  @override
+  String? get senderAccount;
+  @override
+  String? get recipientName;
+  @override
+  String? get targetAccount;
+  @override
+  String? get targetBank;
+  @override
+  String? get note;
+  @override
+  double? get balanceBefore;
+  @override
+  double? get balanceAfter;
+  @override
+  String? get authMethod;
+  @override
+  double? get fee;
   @override
   String? get merchantLogoUrl;
   @override

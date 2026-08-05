@@ -132,6 +132,19 @@ class ProfileScreen extends ConsumerWidget {
           ),
 
           _Section(
+            title: 'Support & AI Assistant',
+            children: [
+              AppListTile(
+                title: const Text('AI Banking Assistant'),
+                subtitle: const Text('Chat with SmartBank AI 24/7'),
+                leading: const Icon(Icons.auto_awesome_rounded, color: Colors.blueAccent),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/ai-assistant'),
+              ),
+            ],
+          ),
+
+          _Section(
             title: 'Preferences',
             children: [
               AppListTile(

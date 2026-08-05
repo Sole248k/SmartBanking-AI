@@ -21,7 +21,7 @@ final walletRepositoryProvider = AutoDisposeProvider<WalletRepository>.internal(
 );
 
 typedef WalletRepositoryRef = AutoDisposeProviderRef<WalletRepository>;
-String _$walletControllerHash() => r'6bc014273a2205c38894a3bfb674a5e6fd80e2b2';
+String _$walletControllerHash() => r'90b5255421860a5c3363003d951c80932618bb2e';
 
 /// See also [WalletController].
 @ProviderFor(WalletController)

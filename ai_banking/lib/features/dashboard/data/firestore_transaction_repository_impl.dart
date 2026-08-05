@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fpdart/fpdart.dart';
@@ -147,6 +148,120 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
       return right(Account.fromJson({...doc.data()!, 'id': doc.id}));
     } catch (e) {
       return left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Account>> addExternalCard(Account account) async {
+    try {
+      if (_uid == null) return left(const AuthFailure('User not logged in'));
+
+      // Check for duplicate card number for this user
+      final existing = await _firestore
+          .collection('accounts')
+          .where('userId', isEqualTo: _uid)
+          .where('cardNumber', isEqualTo: account.cardNumber)
+          .limit(1)
+          .get();
+
+      if (existing.docs.isNotEmpty) {
+        return left(const ServerFailure('This card is already linked to your account'));
+      }
+
+      // Generate a one-time demo balance between ₱5,000 and ₱99,999 if 0
+      final double demoBalance = account.balance > 0
+          ? account.balance
+          : (5000 + math.Random().nextDouble() * 94999).roundToDouble();
+
+      final accountWithBalance = account.copyWith(
+        balance: demoBalance,
+        availableBalance: demoBalance,
+      );
+
+      final docRef = await _firestore.collection('accounts').add({
+        ...accountWithBalance.toJson(),
+        'userId': _uid,
+        'linkedAt': DateTime.now().toIso8601String(),
+        'isExternal': true,
+      });
+
+      // Log Card Added Transaction
+      await _firestore.collection('transactions').add({
+        'userId': _uid,
+        'accountId': docRef.id,
+        'title': 'Linked ${account.bankName} Card',
+        'description': 'Added external payment card',
+        'amount': demoBalance,
+        'date': FieldValue.serverTimestamp(),
+        'category': 'Card Management',
+        'status': 'completed',
+        'type': 'credit',
+      });
+
+      final newAccount = accountWithBalance.copyWith(
+        id: docRef.id,
+        userId: _uid!,
+        linkedAt: DateTime.now().toIso8601String(),
+        isExternal: true,
+      );
+      return right(newAccount);
+    } catch (e) {
+      return left(ServerFailure('Failed to add card: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateCardStatus(String accountId, AccountStatus status) async {
+    try {
+      await _firestore.collection('accounts').doc(accountId).update({
+        'status': status.name,
+      });
+      return right(null);
+    } catch (e) {
+      return left(ServerFailure('Failed to update status: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateCardNickname(String accountId, String nickname) async {
+    try {
+      await _firestore.collection('accounts').doc(accountId).update({
+        'nickname': nickname,
+        'label': nickname.isEmpty ? 'Card' : nickname,
+      });
+      return right(null);
+    } catch (e) {
+      return left(ServerFailure('Failed to update nickname: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> setDefaultCard(String accountId) async {
+    try {
+      if (_uid == null) return left(const AuthFailure('User not logged in'));
+      final userAccounts = await _firestore
+          .collection('accounts')
+          .where('userId', isEqualTo: _uid)
+          .get();
+
+      final batch = _firestore.batch();
+      for (final doc in userAccounts.docs) {
+        batch.update(doc.reference, {'isDefault': doc.id == accountId});
+      }
+      await batch.commit();
+      return right(null);
+    } catch (e) {
+      return left(ServerFailure('Failed to set default card: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> removeCard(String accountId) async {
+    try {
+      await _firestore.collection('accounts').doc(accountId).delete();
+      return right(null);
+    } catch (e) {
+      return left(ServerFailure('Failed to remove card: $e'));
     }
   }
 }

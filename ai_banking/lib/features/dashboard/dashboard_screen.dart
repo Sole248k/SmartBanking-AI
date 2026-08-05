@@ -206,7 +206,7 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () => context.push('/transactions'),
                         child: const Text('See All'),
                       ),
                     ],
@@ -237,11 +237,12 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                       );
                     }
+                    final recentList = transactions.take(5).toList();
                     return SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) =>
-                            TransactionItem(transaction: transactions[index]),
-                        childCount: transactions.length,
+                            TransactionItem(transaction: recentList[index]),
+                        childCount: recentList.length,
                       ),
                     );
                   },
@@ -286,10 +287,6 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/ai-assistant'),
-        child: const Icon(Icons.auto_awesome),
       ),
     );
   }

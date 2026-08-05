@@ -1,4 +1,6 @@
+import 'package:fpdart/fpdart.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/errors/failure.dart';
 import '../data/firestore_wallet_repository_impl.dart';
 import '../models/wallet.dart';
 import '../repositories/wallet_repository.dart';
@@ -17,8 +19,7 @@ class WalletController extends _$WalletController {
     return ref.watch(walletRepositoryProvider).watchWallet();
   }
 
-  Future<void> topUp(double amount, String fromAccountId) async {
-    // Top up logic remains the same as it uses the repository
-    await ref.read(walletRepositoryProvider).topUp(amount, fromAccountId);
+  Future<Either<Failure, Wallet>> topUp(double amount, String fromAccountId) async {
+    return await ref.read(walletRepositoryProvider).topUp(amount, fromAccountId);
   }
 }

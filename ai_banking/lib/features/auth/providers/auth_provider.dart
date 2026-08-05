@@ -51,12 +51,10 @@ class AuthNotifier extends _$AuthNotifier {
       (failure) => AsyncValue.error(failure.message, StackTrace.current),
       (user) => AsyncValue.data(user),
     );
-    // After successful registration the profile document has just been
-    // written by UserProvisioningService. Invalidate the profile so it
-    // re-fetches with the retry logic instead of serving a stale null.
-    if (state.hasValue && state.value != null) {
-      ref.invalidate(authStateChangesProvider);
-    }
+    // Note: Do NOT invalidate authStateChangesProvider here — doing so caused
+    // the Firebase stream to briefly emit null, making the router bounce the
+    // user from dashboard → /welcome → /loading (double loading screen bug).
+    // Profile/account data freshness is now handled by the loading screen.
   }
 
   Future<void> signInWithGoogle() async {

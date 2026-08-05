@@ -20,9 +20,21 @@ Stream<List<Account>> dashboardAccounts(DashboardAccountsRef ref) {
 @riverpod
 Stream<List<Transaction>> recentTransactions(RecentTransactionsRef ref) {
   final activeAccount = ref.watch(activeAccountProvider);
-  if (activeAccount == null) return const Stream.empty();
-  
+
   return ref.watch(transactionRepositoryProvider).watchRecentTransactions().map((transactions) {
-    return transactions.where((t) => t.accountId == activeAccount.id).toList();
+    if (activeAccount == null) return const [];
+
+    final accId = activeAccount.id;
+    final accNum = activeAccount.accountNumber;
+    final cardNum = activeAccount.cardNumber;
+
+    return transactions.where((t) {
+      if (t.accountId == accId) return true;
+      if (accNum.isNotEmpty && t.targetAccount == accNum) return true;
+      if (cardNum.isNotEmpty && t.targetAccount == cardNum) return true;
+      if (accNum.isNotEmpty && t.senderAccount == accNum) return true;
+      if (cardNum.isNotEmpty && t.senderAccount == cardNum) return true;
+      return false;
+    }).toList();
   });
 }

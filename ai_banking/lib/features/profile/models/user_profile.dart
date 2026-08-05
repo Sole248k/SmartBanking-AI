@@ -14,6 +14,10 @@ class UserProfile with _$UserProfile {
     @Default(false) bool isBiometricEnabled,
     @Default(false) bool pushNotificationsEnabled,
     @Default('Not Started') String kycStatus,
+    String? pinHash,
+    String? pinCreatedAt,
+    @Default(0) int pinAttempts,
+    String? pinLockedUntil,
   }) = _UserProfile;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => _$UserProfileFromJson(json);

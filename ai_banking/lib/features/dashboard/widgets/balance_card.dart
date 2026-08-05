@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../core/theme/bank_card_theme.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/models/account.dart';
 import '../../../shared/providers/privacy_provider.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -38,10 +40,9 @@ class _BalanceCardState extends State<BalanceCard> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    
-    final List<Color> gradientColors = widget.account.cardGradientColors.map((hex) {
-      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
-    }).toList();
+
+    final bankStyle = BankCardTheme.getBankStyle(widget.account.bankName);
+    final gradientColors = bankStyle.gradientColors;
 
     return InkWell(
       onTap: widget.onTap,
@@ -58,7 +59,7 @@ class _BalanceCardState extends State<BalanceCard> with SingleTickerProviderStat
           borderRadius: BorderRadius.circular(AppConstants.radiusXl),
           boxShadow: [
             BoxShadow(
-              color: gradientColors.first.withValues(alpha: 0.3),
+              color: gradientColors.first.withValues(alpha: 0.35),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -77,25 +78,64 @@ class _BalanceCardState extends State<BalanceCard> with SingleTickerProviderStat
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
                           children: [
-                            Text(
-                              widget.account.label,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  bankStyle.bankName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  widget.account.type.name.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              widget.account.type.name.toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
+                            if (widget.account.isDefault) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.greenAccent.shade700,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 4,
+                                    )
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.star_rounded,
+                                        color: Colors.white, size: 12),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'DEFAULT',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                         Row(
@@ -131,7 +171,7 @@ class _BalanceCardState extends State<BalanceCard> with SingleTickerProviderStat
                     ),
                     const Spacer(),
                     PrivacySensitiveText(
-                      '${widget.account.currency} ${widget.account.balance.toStringAsFixed(2)}',
+                      CurrencyFormatter.format(widget.account.balance),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 28,

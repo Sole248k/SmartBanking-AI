@@ -35,6 +35,12 @@ mixin _$Account {
   AccountStatus get status => throw _privateConstructorUsedError;
   CardNetwork get cardNetwork => throw _privateConstructorUsedError;
   List<String> get cardGradientColors => throw _privateConstructorUsedError;
+  bool get isDefault => throw _privateConstructorUsedError;
+  String? get nickname => throw _privateConstructorUsedError;
+  String get bankName => throw _privateConstructorUsedError;
+  String? get linkedAt => throw _privateConstructorUsedError;
+  String? get billingAddress => throw _privateConstructorUsedError;
+  bool get isExternal => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -61,7 +67,13 @@ abstract class $AccountCopyWith<$Res> {
       String label,
       AccountStatus status,
       CardNetwork cardNetwork,
-      List<String> cardGradientColors});
+      List<String> cardGradientColors,
+      bool isDefault,
+      String? nickname,
+      String bankName,
+      String? linkedAt,
+      String? billingAddress,
+      bool isExternal});
 }
 
 /// @nodoc
@@ -92,6 +104,12 @@ class _$AccountCopyWithImpl<$Res, $Val extends Account>
     Object? status = null,
     Object? cardNetwork = null,
     Object? cardGradientColors = null,
+    Object? isDefault = null,
+    Object? nickname = freezed,
+    Object? bankName = null,
+    Object? linkedAt = freezed,
+    Object? billingAddress = freezed,
+    Object? isExternal = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -154,6 +172,30 @@ class _$AccountCopyWithImpl<$Res, $Val extends Account>
           ? _value.cardGradientColors
           : cardGradientColors // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      isDefault: null == isDefault
+          ? _value.isDefault
+          : isDefault // ignore: cast_nullable_to_non_nullable
+              as bool,
+      nickname: freezed == nickname
+          ? _value.nickname
+          : nickname // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bankName: null == bankName
+          ? _value.bankName
+          : bankName // ignore: cast_nullable_to_non_nullable
+              as String,
+      linkedAt: freezed == linkedAt
+          ? _value.linkedAt
+          : linkedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      billingAddress: freezed == billingAddress
+          ? _value.billingAddress
+          : billingAddress // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isExternal: null == isExternal
+          ? _value.isExternal
+          : isExternal // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -180,7 +222,13 @@ abstract class _$$AccountImplCopyWith<$Res> implements $AccountCopyWith<$Res> {
       String label,
       AccountStatus status,
       CardNetwork cardNetwork,
-      List<String> cardGradientColors});
+      List<String> cardGradientColors,
+      bool isDefault,
+      String? nickname,
+      String bankName,
+      String? linkedAt,
+      String? billingAddress,
+      bool isExternal});
 }
 
 /// @nodoc
@@ -209,6 +257,12 @@ class __$$AccountImplCopyWithImpl<$Res>
     Object? status = null,
     Object? cardNetwork = null,
     Object? cardGradientColors = null,
+    Object? isDefault = null,
+    Object? nickname = freezed,
+    Object? bankName = null,
+    Object? linkedAt = freezed,
+    Object? billingAddress = freezed,
+    Object? isExternal = null,
   }) {
     return _then(_$AccountImpl(
       id: null == id
@@ -271,6 +325,30 @@ class __$$AccountImplCopyWithImpl<$Res>
           ? _value._cardGradientColors
           : cardGradientColors // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      isDefault: null == isDefault
+          ? _value.isDefault
+          : isDefault // ignore: cast_nullable_to_non_nullable
+              as bool,
+      nickname: freezed == nickname
+          ? _value.nickname
+          : nickname // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bankName: null == bankName
+          ? _value.bankName
+          : bankName // ignore: cast_nullable_to_non_nullable
+              as String,
+      linkedAt: freezed == linkedAt
+          ? _value.linkedAt
+          : linkedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      billingAddress: freezed == billingAddress
+          ? _value.billingAddress
+          : billingAddress // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isExternal: null == isExternal
+          ? _value.isExternal
+          : isExternal // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -293,7 +371,13 @@ class _$AccountImpl implements _Account {
       required this.label,
       this.status = AccountStatus.active,
       this.cardNetwork = CardNetwork.visa,
-      final List<String> cardGradientColors = const ['#0A84FF', '#5E5CE6']})
+      final List<String> cardGradientColors = const ['#0A84FF', '#5E5CE6'],
+      this.isDefault = false,
+      this.nickname,
+      this.bankName = 'SmartBank',
+      this.linkedAt,
+      this.billingAddress,
+      this.isExternal = false})
       : _cardGradientColors = cardGradientColors;
 
   factory _$AccountImpl.fromJson(Map<String, dynamic> json) =>
@@ -347,8 +431,24 @@ class _$AccountImpl implements _Account {
   }
 
   @override
+  @JsonKey()
+  final bool isDefault;
+  @override
+  final String? nickname;
+  @override
+  @JsonKey()
+  final String bankName;
+  @override
+  final String? linkedAt;
+  @override
+  final String? billingAddress;
+  @override
+  @JsonKey()
+  final bool isExternal;
+
+  @override
   String toString() {
-    return 'Account(id: $id, userId: $userId, accountNumber: $accountNumber, cardNumber: $cardNumber, cvv: $cvv, expiryDate: $expiryDate, holderName: $holderName, balance: $balance, availableBalance: $availableBalance, currency: $currency, type: $type, label: $label, status: $status, cardNetwork: $cardNetwork, cardGradientColors: $cardGradientColors)';
+    return 'Account(id: $id, userId: $userId, accountNumber: $accountNumber, cardNumber: $cardNumber, cvv: $cvv, expiryDate: $expiryDate, holderName: $holderName, balance: $balance, availableBalance: $availableBalance, currency: $currency, type: $type, label: $label, status: $status, cardNetwork: $cardNetwork, cardGradientColors: $cardGradientColors, isDefault: $isDefault, nickname: $nickname, bankName: $bankName, linkedAt: $linkedAt, billingAddress: $billingAddress, isExternal: $isExternal)';
   }
 
   @override
@@ -378,28 +478,47 @@ class _$AccountImpl implements _Account {
             (identical(other.cardNetwork, cardNetwork) ||
                 other.cardNetwork == cardNetwork) &&
             const DeepCollectionEquality()
-                .equals(other._cardGradientColors, _cardGradientColors));
+                .equals(other._cardGradientColors, _cardGradientColors) &&
+            (identical(other.isDefault, isDefault) ||
+                other.isDefault == isDefault) &&
+            (identical(other.nickname, nickname) ||
+                other.nickname == nickname) &&
+            (identical(other.bankName, bankName) ||
+                other.bankName == bankName) &&
+            (identical(other.linkedAt, linkedAt) ||
+                other.linkedAt == linkedAt) &&
+            (identical(other.billingAddress, billingAddress) ||
+                other.billingAddress == billingAddress) &&
+            (identical(other.isExternal, isExternal) ||
+                other.isExternal == isExternal));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      userId,
-      accountNumber,
-      cardNumber,
-      cvv,
-      expiryDate,
-      holderName,
-      balance,
-      availableBalance,
-      currency,
-      type,
-      label,
-      status,
-      cardNetwork,
-      const DeepCollectionEquality().hash(_cardGradientColors));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        userId,
+        accountNumber,
+        cardNumber,
+        cvv,
+        expiryDate,
+        holderName,
+        balance,
+        availableBalance,
+        currency,
+        type,
+        label,
+        status,
+        cardNetwork,
+        const DeepCollectionEquality().hash(_cardGradientColors),
+        isDefault,
+        nickname,
+        bankName,
+        linkedAt,
+        billingAddress,
+        isExternal
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -431,7 +550,13 @@ abstract class _Account implements Account {
       required final String label,
       final AccountStatus status,
       final CardNetwork cardNetwork,
-      final List<String> cardGradientColors}) = _$AccountImpl;
+      final List<String> cardGradientColors,
+      final bool isDefault,
+      final String? nickname,
+      final String bankName,
+      final String? linkedAt,
+      final String? billingAddress,
+      final bool isExternal}) = _$AccountImpl;
 
   factory _Account.fromJson(Map<String, dynamic> json) = _$AccountImpl.fromJson;
 
@@ -465,6 +590,18 @@ abstract class _Account implements Account {
   CardNetwork get cardNetwork;
   @override
   List<String> get cardGradientColors;
+  @override
+  bool get isDefault;
+  @override
+  String? get nickname;
+  @override
+  String get bankName;
+  @override
+  String? get linkedAt;
+  @override
+  String? get billingAddress;
+  @override
+  bool get isExternal;
   @override
   @JsonKey(ignore: true)
   _$$AccountImplCopyWith<_$AccountImpl> get copyWith =>

@@ -63,9 +63,12 @@ class UserProvisioningService {
         'currency': 'PHP',
         'type': 'savings',
         'label': 'Initial Savings',
+        'bankName': 'SmartBank AI',
         'status': 'active',
         'cardNetwork': 'visa',
         'cardGradientColors': ['#0A84FF', '#5E5CE6'],
+        'isDefault': true,
+        'isExternal': false,
       });
       accountId = newAccountRef.id;
     } else {

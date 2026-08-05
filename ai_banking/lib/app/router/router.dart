@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
+import '../../features/auth/presentation/loading_screen.dart';
+import '../../features/auth/presentation/setup_pin_screen.dart';
+import '../../features/auth/presentation/pin_lock_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/dashboard/presentation/account_details_screen.dart';
 import '../../features/transfer/presentation/add_beneficiary_screen.dart';
@@ -23,10 +27,18 @@ import '../../features/budget/presentation/budget_list_screen.dart';
 import '../../features/budget/presentation/create_budget_screen.dart';
 import '../../features/ai_assistant/presentation/ai_assistant_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/profile/providers/profile_providers.dart';
 import '../../features/kyc/presentation/screens/kyc_main_flow.dart';
 import '../../features/savings/presentation/screens/savings_screen.dart';
 import '../../features/savings/presentation/screens/savings_create_screen.dart';
+import '../../features/card_management/presentation/add_card_screen.dart';
+import '../../features/card_management/presentation/card_details_screen.dart';
+import '../../features/transactions/presentation/transaction_history_screen.dart';
+import '../../features/transactions/presentation/transaction_details_screen.dart';
+import '../../features/dashboard/models/transaction.dart';
 import '../../shared/models/account.dart';
+
+import '../../shared/providers/session_lock_provider.dart';
 
 part 'router.g.dart';
 
@@ -36,6 +48,8 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 @riverpod
 GoRouter router(RouterRef ref) {
   final authState = ref.watch(authStateChangesProvider);
+  final isSessionLocked = ref.watch(sessionLockControllerProvider);
+  final profileAsync = ref.watch(profileControllerProvider);
 
   return GoRouter(
     initialLocation: '/welcome',
@@ -50,15 +64,30 @@ GoRouter router(RouterRef ref) {
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/welcome';
 
+      final isLoadingRoute = state.matchedLocation == '/loading';
+      final isPinRoute = state.matchedLocation == '/setup-pin' ||
+          state.matchedLocation == '/pin-lock';
+
       if (user == null) {
-        // Not logged in -> only allow auth routes
+        // Not logged in → only allow auth routes; redirect everything else to welcome
         return isAuthRoute ? null : '/welcome';
       }
 
-      // Logged in -> don't allow auth routes
-      if (isAuthRoute) {
-        return '/';
+      // Logged in & session locked → enforce PIN lock screen for accounts with a PIN
+      if (isSessionLocked && !isPinRoute) {
+        final profile = profileAsync.value;
+        final hasPin = profile != null &&
+            profile.pinHash != null &&
+            profile.pinHash!.isNotEmpty;
+        if (hasPin) {
+          return '/pin-lock';
+        }
       }
+
+      // Logged in → don't allow auth routes; route through loading screen
+      // so Firestore data has time to load before the dashboard appears.
+      if (isAuthRoute) return '/loading';
+      if (isLoadingRoute || isPinRoute) return null;
 
       return null;
     },
@@ -73,21 +102,27 @@ GoRouter router(RouterRef ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
+        path: '/loading',
+        builder: (context, state) => const LoadingScreen(),
+      ),
+      GoRoute(
+        path: '/setup-pin',
+        builder: (context, state) => const SetupPinScreen(),
+      ),
+      GoRoute(
+        path: '/pin-lock',
+        builder: (context, state) => const PinLockScreen(),
+      ),
+      GoRoute(
         path: '/kyc',
         builder: (context, state) => const KycMainFlow(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) {
-          return Scaffold(
-            key: const ValueKey('shell_scaffold'),
-            body: child,
-            bottomNavigationBar: AppBottomNavBar(
-              currentIndex: _calculateSelectedIndex(state.fullPath ?? '/'),
-              onTap: (index) => _onItemTapped(index, context),
-            ),
-          );
-        },
+        builder: (context, state, child) => _ShellScaffold(
+          state: state,
+          child: child,
+        ),
         routes: [
           GoRoute(
             path: '/',
@@ -134,6 +169,17 @@ GoRouter router(RouterRef ref) {
                 path: 'pay-bills',
                 builder: (context, state) => const BillPaymentScreen(),
               ),
+              GoRoute(
+                path: 'card-management/add',
+                builder: (context, state) => const AddCardScreen(),
+              ),
+              GoRoute(
+                path: 'card-management/details',
+                builder: (context, state) {
+                  final account = state.extra as Account;
+                  return CardDetailsScreen(account: account);
+                },
+              ),
             ],
           ),
           GoRoute(
@@ -178,7 +224,19 @@ GoRouter router(RouterRef ref) {
               ),
             ],
           ),
-          // Add other shell routes here
+          GoRoute(
+            path: '/transactions',
+            builder: (context, state) => const TransactionHistoryScreen(),
+            routes: [
+              GoRoute(
+                path: 'details',
+                builder: (context, state) {
+                  final transaction = state.extra as Transaction;
+                  return TransactionDetailsScreen(transaction: transaction);
+                },
+              ),
+            ],
+          ),
         ],
       ),
     ],
@@ -218,5 +276,138 @@ void _onItemTapped(int index, BuildContext context) {
     case 4:
       context.go('/profile');
       break;
+  }
+}
+
+/// Shell scaffold with an intelligent, draggable, edge-snapping AI Assistant FAB.
+///
+/// Features:
+///   - Automatically HIDES on sensitive/form routes (PIN, card details, transfer, QR, etc.) or when keyboard is open.
+///   - Slides out of view when scrolling DOWN, reappears when scrolling UP.
+///   - Supports drag-and-drop repositioning with smooth edge-snapping.
+class _ShellScaffold extends StatefulWidget {
+  const _ShellScaffold({required this.state, required this.child});
+
+  final GoRouterState state;
+  final Widget child;
+
+  @override
+  State<_ShellScaffold> createState() => _ShellScaffoldState();
+}
+
+class _ShellScaffoldState extends State<_ShellScaffold> {
+  bool _scrollFabVisible = true;
+  double _fabRight = 16.0;
+  double _fabBottom = 80.0;
+  bool _isDragging = false;
+
+  bool _shouldHideFab(String path, BuildContext context) {
+    // Hide if soft keyboard is open
+    if (MediaQuery.of(context).viewInsets.bottom > 0) return true;
+
+    // Hide during sensitive, form, or full-screen routes
+    final lower = path.toLowerCase();
+    return lower.contains('ai-assistant') ||
+        lower.contains('setup-pin') ||
+        lower.contains('pin-lock') ||
+        lower.contains('card-management') ||
+        lower.contains('transfer') ||
+        lower.contains('add-') ||
+        lower.contains('details') ||
+        lower.contains('qr') ||
+        lower.contains('request-money') ||
+        lower.contains('pay-bills') ||
+        lower.contains('kyc') ||
+        lower.contains('top-up') ||
+        lower.contains('topup') ||
+        lower.contains('deposit') ||
+        lower.contains('add-card') ||
+        lower.contains('welcome') ||
+        lower.contains('login') ||
+        lower.contains('register');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentPath = widget.state.fullPath ?? '/';
+    final isRouteHide = _shouldHideFab(currentPath, context);
+    final isFabVisible = _scrollFabVisible && !isRouteHide;
+    final size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      key: const ValueKey('shell_scaffold'),
+      body: Stack(
+        children: [
+          NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollUpdateNotification) {
+                final delta = notification.scrollDelta ?? 0.0;
+                if (delta > 2.0 && _scrollFabVisible) {
+                  setState(() => _scrollFabVisible = false);
+                } else if (delta < -2.0 && !_scrollFabVisible) {
+                  setState(() => _scrollFabVisible = true);
+                }
+              } else if (notification is UserScrollNotification) {
+                if (notification.direction == ScrollDirection.reverse &&
+                    _scrollFabVisible) {
+                  setState(() => _scrollFabVisible = false);
+                } else if (notification.direction == ScrollDirection.forward &&
+                    !_scrollFabVisible) {
+                  setState(() => _scrollFabVisible = true);
+                }
+              }
+              return false;
+            },
+            child: widget.child,
+          ),
+
+          // Draggable & Edge-Snapping Chatbot FAB
+          if (isFabVisible)
+            Positioned(
+              right: _fabRight,
+              bottom: _fabBottom,
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  setState(() {
+                    _isDragging = true;
+                    _fabRight = (_fabRight - details.delta.dx)
+                        .clamp(16.0, size.width - 72.0);
+                    _fabBottom = (_fabBottom - details.delta.dy)
+                        .clamp(80.0, size.height - 120.0);
+                  });
+                },
+                onPanEnd: (details) {
+                  setState(() {
+                    _isDragging = false;
+                    // Edge snapping logic (snap to nearest left or right edge)
+                    final midX = size.width / 2;
+                    if (_fabRight > midX - 36) {
+                      _fabRight = size.width - 72.0; // Snap to left edge
+                    } else {
+                      _fabRight = 16.0; // Snap to right edge
+                    }
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: _isDragging
+                      ? Duration.zero
+                      : const Duration(milliseconds: 260),
+                  curve: Curves.easeOutBack,
+                  child: FloatingActionButton(
+                    heroTag: 'ai_assistant_fab_draggable',
+                    onPressed: () => context.push('/ai-assistant'),
+                    tooltip: 'AI Assistant (Drag to move)',
+                    child: const Icon(Icons.auto_awesome_rounded),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      bottomNavigationBar: AppBottomNavBar(
+        currentIndex: _calculateSelectedIndex(currentPath),
+        onTap: (index) => _onItemTapped(index, context),
+      ),
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../app/constants/app_constants.dart';
 
 class AppTextField extends StatelessWidget {
@@ -15,6 +16,8 @@ class AppTextField extends StatelessWidget {
     this.validator,
     this.onChanged,
     this.readOnly = false,
+    this.inputFormatters,
+    this.textCapitalization = TextCapitalization.none,
   });
   final String? label;
   final String? hint;
@@ -26,6 +29,8 @@ class AppTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final bool readOnly;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextCapitalization textCapitalization;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +56,8 @@ class AppTextField extends StatelessWidget {
           readOnly: readOnly,
           validator: validator,
           onChanged: onChanged,
+          inputFormatters: inputFormatters,
+          textCapitalization: textCapitalization,
           style: const TextStyle(fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,

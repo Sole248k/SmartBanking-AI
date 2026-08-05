@@ -6,6 +6,7 @@ import '../../../core/utils/validation_utils.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../providers/auth_provider.dart';
+import '../domain/auth_user.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -34,6 +35,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
     final theme = Theme.of(context);
+
+    // Navigate to loading screen on successful registration
+    ref.listen<AsyncValue<AuthUser?>>(authNotifierProvider, (previous, next) {
+      if (next.hasValue && next.value != null) {
+        context.go('/loading');
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(),

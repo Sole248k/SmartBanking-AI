@@ -29,6 +29,12 @@ _$AccountImpl _$$AccountImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const ['#0A84FF', '#5E5CE6'],
+      isDefault: json['isDefault'] as bool? ?? false,
+      nickname: json['nickname'] as String?,
+      bankName: json['bankName'] as String? ?? 'SmartBank',
+      linkedAt: json['linkedAt'] as String?,
+      billingAddress: json['billingAddress'] as String?,
+      isExternal: json['isExternal'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$AccountImplToJson(_$AccountImpl instance) =>
@@ -48,6 +54,12 @@ Map<String, dynamic> _$$AccountImplToJson(_$AccountImpl instance) =>
       'status': _$AccountStatusEnumMap[instance.status]!,
       'cardNetwork': _$CardNetworkEnumMap[instance.cardNetwork]!,
       'cardGradientColors': instance.cardGradientColors,
+      'isDefault': instance.isDefault,
+      'nickname': instance.nickname,
+      'bankName': instance.bankName,
+      'linkedAt': instance.linkedAt,
+      'billingAddress': instance.billingAddress,
+      'isExternal': instance.isExternal,
     };
 
 const _$AccountTypeEnumMap = {
@@ -56,6 +68,7 @@ const _$AccountTypeEnumMap = {
   AccountType.investment: 'investment',
   AccountType.credit: 'credit',
   AccountType.virtual: 'virtual',
+  AccountType.prepaid: 'prepaid',
 };
 
 const _$AccountStatusEnumMap = {
@@ -68,5 +81,8 @@ const _$CardNetworkEnumMap = {
   CardNetwork.visa: 'visa',
   CardNetwork.mastercard: 'mastercard',
   CardNetwork.amex: 'amex',
+  CardNetwork.discover: 'discover',
   CardNetwork.discovery: 'discovery',
+  CardNetwork.jcb: 'jcb',
+  CardNetwork.unionpay: 'unionpay',
 };

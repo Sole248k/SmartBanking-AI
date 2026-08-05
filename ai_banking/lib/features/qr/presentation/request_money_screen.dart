@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -87,7 +88,7 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Requesting ₱${_generatedData!.amount?.toStringAsFixed(2) ?? '0.00'}',
+                      'Requesting ${CurrencyFormatter.format(_generatedData!.amount ?? 0.0)}',
                       style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     if (_generatedData!.note != null && _generatedData!.note!.isNotEmpty)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -46,7 +47,7 @@ class WalletScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: AppConstants.sm),
                       Text(
-                        '₱ ${wallet.balance.toStringAsFixed(2)}',
+                        CurrencyFormatter.format(wallet.balance),
                         style: theme.textTheme.displayMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
