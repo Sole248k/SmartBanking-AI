@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'gemini_client.g.dart';
 
 // IMPORTANT: Replace with your actual Gemini API Key from Google AI Studio
-const _geminiApiKey = 'AQ.Ab8RN6J0whuMvWdFfe9cwF4UAcPIclWPreuLh2OYWYk9SkmdwA';
+const _geminiApiKey = '';
 
 @riverpod
 GenerativeModel geminiClient(GeminiClientRef ref) {
