@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1099392878008",
+    "project_id": "smartbank-ai-c784d",
+    "storage_bucket": "smartbank-ai-c784d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1099392878008:android:82db1abdb4c0a69fe2fb4d",
+        "android_client_info": {
+          "package_name": "com.example.ai_banking"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1099392878008-2raal5q25ds2bdavom95s1f1pk52eodd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArD3rUObpiCZWEWGBjB5-nBu6zmrQUFNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1099392878008-2raal5q25ds2bdavom95s1f1pk52eodd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
