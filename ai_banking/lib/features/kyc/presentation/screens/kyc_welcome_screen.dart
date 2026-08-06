@@ -2,14 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/utils/kyc_gatekeeper.dart';
+import '../../../profile/providers/profile_providers.dart';
 import '../../domain/entities/kyc_record.dart';
 import '../../providers/kyc_provider.dart';
+import 'kyc_status_screen.dart';
 
 class KycWelcomeScreen extends ConsumerWidget {
   const KycWelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(profileControllerProvider);
+    final kycGate = KycGateStatus.parse(profileAsync.value?.kycStatus);
+
+    // If KYC is already approved, pending review, or doc request:
+    // Render KycStatusScreen directly to prevent re-verifying
+    if (kycGate == KycGateStatus.approved ||
+        kycGate == KycGateStatus.pending ||
+        kycGate == KycGateStatus.moreInfoRequired) {
+      return const KycStatusScreen();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Identity Verification'),

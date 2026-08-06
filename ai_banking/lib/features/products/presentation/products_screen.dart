@@ -6,6 +6,7 @@ import '../../../core/utils/kyc_gatekeeper.dart';
 import '../../../shared/models/account.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../profile/providers/profile_providers.dart';
+import '../providers/product_application_user_providers.dart';
 
 class ProductsScreen extends ConsumerWidget {
   const ProductsScreen({super.key});
@@ -35,6 +36,10 @@ class ProductsScreen extends ConsumerWidget {
           children: [
             // KYC Gatekeeper Banner
             _buildKycGateBanner(context, kycGate),
+            const SizedBox(height: AppConstants.md),
+
+            // Prominent My Applications Section
+            _buildMyApplicationsCard(context, ref),
             const SizedBox(height: AppConstants.lg),
 
             _buildCategoryHeader(context, 'Bank Accounts', 'Open new savings and current accounts instantly'),
@@ -205,6 +210,96 @@ class ProductsScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMyApplicationsCard(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final appsAsync = ref.watch(myProductApplicationsProvider);
+    final count = appsAsync.value?.length ?? 0;
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        side: BorderSide(
+          color: theme.colorScheme.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
+      child: InkWell(
+        onTap: () => context.push('/products/status'),
+        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.md),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppConstants.md),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                ),
+                child: Icon(
+                  Icons.assignment_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: AppConstants.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'My Applications',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (count > 0) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '$count',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      count > 0
+                          ? 'Track status & progress of your $count submitted application${count > 1 ? 's' : ''}'
+                          : 'View & track approval status of product applications',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

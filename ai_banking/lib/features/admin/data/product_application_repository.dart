@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../core/errors/failure.dart';
@@ -38,10 +39,12 @@ class ProductApplicationRepository {
     return _firestore
         .collection(_collection)
         .where('userId', isEqualTo: userId)
-        .orderBy('submittedAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map(ProductApplication.fromFirestore).toList());
+        .map((snap) {
+      final list = snap.docs.map(ProductApplication.fromFirestore).toList();
+      list.sort((a, b) => b.submittedAt.compareTo(a.submittedAt));
+      return list;
+    });
   }
 
   // ──────────────────────────────────────────
@@ -224,6 +227,66 @@ class ProductApplicationRepository {
         'reviewedBy': admin.uid,
         if (notes != null) 'internalNotes': notes,
       });
+
+      // When an application is approved, create the corresponding Bank Account for the user!
+      if (newStatus == ApplicationStatus.approved) {
+        // IDEMPOTENCY CHECK: Ensure an account for this applicationId was not already created!
+        final existingAcc = await _firestore
+            .collection('accounts')
+            .where('applicationId', isEqualTo: applicationId)
+            .limit(1)
+            .get();
+
+        if (existingAcc.docs.isEmpty) {
+          final rawData = app.applicationData;
+          final initialDeposit = (rawData != null && rawData['initialDeposit'] is num)
+              ? (rawData['initialDeposit'] as num).toDouble()
+              : 0.0;
+          final isSavings = app.productType == ProductType.savings;
+          final typeName = isSavings ? 'Savings' : 'Current';
+          final typeEnum = isSavings ? 'savings' : 'checking';
+
+          final random = math.Random();
+          final accNo = '1009 ${(random.nextInt(8999) + 1000)} ${(random.nextInt(8999) + 1000)}';
+          final cardNo = '4532 ${(random.nextInt(8999) + 1000)} ${(random.nextInt(8999) + 1000)} ${(random.nextInt(8999) + 1000)}';
+
+          final accountData = {
+            'userId': app.userId,
+            'applicationId': applicationId,
+            'accountNumber': accNo,
+            'cardNumber': cardNo,
+            'holderName': app.userFullName,
+            'type': typeEnum,
+            'label': 'SmartBank $typeName Account',
+            'bankName': 'SmartBank',
+            'balance': initialDeposit,
+            'availableBalance': initialDeposit,
+            'currency': 'PHP',
+            'cardNetwork': 'visa',
+            'cardGradientColors': isSavings
+                ? ['#0A84FF', '#5E5CE6']
+                : ['#30D158', '#0A84FF'],
+            'isDefault': false,
+            'linkedAt': DateTime.now().toIso8601String(),
+          };
+
+          final accDoc = await _firestore.collection('accounts').add(accountData);
+
+          if (initialDeposit > 0) {
+            await _firestore.collection('transactions').add({
+              'userId': app.userId,
+              'accountId': accDoc.id,
+              'title': 'Approved Account Opening',
+              'description': 'Initial deposit for approved SmartBank $typeName Account',
+              'amount': initialDeposit,
+              'date': FieldValue.serverTimestamp(),
+              'category': 'Deposit',
+              'status': 'completed',
+              'type': 'credit',
+            });
+          }
+        }
+      }
 
       await _auditLog.log(
         admin: admin,

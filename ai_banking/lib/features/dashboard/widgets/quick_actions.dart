@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../core/utils/kyc_gatekeeper.dart';
+import '../../profile/providers/profile_providers.dart';
 
-class QuickActions extends StatelessWidget {
+class QuickActions extends ConsumerWidget {
   const QuickActions({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(profileControllerProvider);
+    final kycGate = KycGateStatus.parse(profileAsync.value?.kycStatus);
+
     return Column(
       children: [
         Row(
@@ -44,8 +50,9 @@ class QuickActions extends StatelessWidget {
               onTap: () => context.push('/savings'),
             ),
             _ActionButton(
-              icon: Icons.verified_user_rounded,
-              label: 'Verify',
+              icon: kycGate.isApproved ? Icons.check_circle_rounded : kycGate.icon,
+              iconColor: kycGate.isApproved ? Colors.green : kycGate.statusColor,
+              label: kycGate.isApproved ? 'Verified' : kycGate.badgeText,
               onTap: () => context.push('/kyc'),
             ),
             _ActionButton(
@@ -70,50 +77,46 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.iconColor,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLightMode = theme.brightness == Brightness.light;
+    final color = iconColor ?? theme.colorScheme.primary;
 
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-          child: Container(
-            padding: const EdgeInsets.all(AppConstants.md),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-              boxShadow: [
-                BoxShadow(
-                  // Stronger shadow in Light mode, subtle in Dark mode
-                  color: Colors.black.withValues(
-                    alpha: isLightMode ? 0.15 : 0.05,
-                  ),
-                  blurRadius: isLightMode ? 12 : 10,
-                  spreadRadius: isLightMode ? 1 : 0,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
-            child: Icon(icon, color: theme.colorScheme.primary),
+            child: Icon(
+              icon,
+              color: color,
+              size: 26,
+            ),
           ),
-        ),
-        const SizedBox(height: AppConstants.sm),
-        Text(
-          label,
-          style: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+          const SizedBox(height: AppConstants.xs),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

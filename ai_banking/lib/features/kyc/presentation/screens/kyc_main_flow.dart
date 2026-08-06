@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/kyc_gatekeeper.dart';
+import '../../../profile/providers/profile_providers.dart';
 import '../../domain/entities/kyc_record.dart';
 import '../../providers/kyc_provider.dart';
 import 'id_capture_screen.dart';
@@ -15,6 +17,17 @@ class KycMainFlow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(profileControllerProvider);
+    final kycGate = KycGateStatus.parse(profileAsync.value?.kycStatus);
+
+    // If KYC is already approved, pending review, or more info required:
+    // Route directly to KycStatusScreen so the user cannot repeat the verification steps!
+    if (kycGate == KycGateStatus.approved ||
+        kycGate == KycGateStatus.pending ||
+        kycGate == KycGateStatus.moreInfoRequired) {
+      return const KycStatusScreen();
+    }
+
     final kycState = ref.watch(kycControllerProvider);
 
     switch (kycState.currentStep) {

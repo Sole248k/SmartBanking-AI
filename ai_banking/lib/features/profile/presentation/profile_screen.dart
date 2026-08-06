@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../core/utils/kyc_gatekeeper.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../../../shared/widgets/app_list_tile.dart';
 import '../../../app/theme/theme_provider.dart';
@@ -81,8 +82,9 @@ class ProfileScreen extends ConsumerWidget {
     dynamic profile,
   ) {
     final theme = Theme.of(context);
-    final kycColor = _kycColor(profile.kycStatus);
-    final kycIcon = _kycIcon(profile.kycStatus);
+    final kycGate = KycGateStatus.parse(profile.kycStatus);
+    final kycColor = kycGate.statusColor;
+    final kycIcon = kycGate.icon;
 
     return SingleChildScrollView(
       padding: AppConstants.screenPadding,
@@ -118,7 +120,7 @@ class ProfileScreen extends ConsumerWidget {
               AppListTile(
                 title: const Text('KYC Verification'),
                 subtitle: Text(
-                  _kycSubtitle(profile.kycStatus),
+                  kycGate.isApproved ? 'Verified (Identity Approved)' : kycGate.bannerTitle,
                   style: TextStyle(
                     color: kycColor,
                     fontWeight: FontWeight.w600,

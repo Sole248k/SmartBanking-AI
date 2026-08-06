@@ -2,101 +2,143 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../app/constants/app_constants.dart';
+import '../../../../core/utils/kyc_gatekeeper.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../profile/providers/profile_providers.dart';
+import '../../domain/entities/kyc_record.dart';
+import '../../providers/kyc_provider.dart';
 
 class KycStatusScreen extends ConsumerWidget {
   const KycStatusScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final profileAsync = ref.watch(profileControllerProvider);
-    final kycStatus = profileAsync.value?.kycStatus ?? 'Pending Review';
-    final isApproved = kycStatus == 'Approved';
-    final isRejected = kycStatus == 'Rejected';
+    final profile = profileAsync.value;
+    final kycGate = KycGateStatus.parse(profile?.kycStatus);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('KYC Status'),
+        title: const Text('Identity Verification'),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => context.pop(),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _StatusIcon(kycStatus: kycStatus),
-            const SizedBox(height: 32),
-            Text(
-              isApproved
-                  ? 'Identity Verified'
-                  : isRejected
-                      ? 'Verification Rejected'
-                      : 'Verification Pending',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isApproved
-                  ? 'Congratulations! Your identity has been successfully verified. You now have full access to all banking features.'
-                  : isRejected
-                      ? 'Your verification was not approved. Please re-submit with clearer documents.'
-                      : 'Our team is currently reviewing your documents. This usually takes less than 24 hours. We will notify you once done.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: AppConstants.screenPadding,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: kycGate.statusColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
                   ),
-              textAlign: TextAlign.center,
+                  child: Icon(
+                    kycGate.icon,
+                    color: kycGate.statusColor,
+                    size: 52,
+                  ),
+                ),
+                const SizedBox(height: AppConstants.xl),
+
+                // Title
+                Text(
+                  kycGate.bannerTitle,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppConstants.sm),
+
+                // Status Chip
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: kycGate.statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMax),
+                    border: Border.all(color: kycGate.statusColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    kycGate.badgeText,
+                    style: TextStyle(
+                      color: kycGate.statusColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppConstants.lg),
+
+                // Message Box
+                Container(
+                  padding: const EdgeInsets.all(AppConstants.md),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Text(
+                    kycGate == KycGateStatus.approved
+                        ? 'Your identity has already been verified and approved by SmartBank compliance. You do not need to repeat the verification process.'
+                        : kycGate.bannerMessage,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: AppConstants.xxl),
+
+                // Actions
+                if (kycGate == KycGateStatus.approved) ...[
+                  AppButton(
+                    text: 'Explore Products',
+                    icon: Icons.grid_view_rounded,
+                    onPressed: () => context.go('/products'),
+                  ),
+                  const SizedBox(height: AppConstants.md),
+                  AppButton(
+                    text: 'Back to Home',
+                    variant: AppButtonVariant.outline,
+                    onPressed: () => context.go('/'),
+                  ),
+                ] else if (kycGate == KycGateStatus.rejected) ...[
+                  AppButton(
+                    text: 'Resubmit Verification',
+                    icon: Icons.refresh_rounded,
+                    onPressed: () {
+                      ref.read(kycControllerProvider.notifier).setStep(KycStep.personalInfo);
+                    },
+                  ),
+                  const SizedBox(height: AppConstants.md),
+                  AppButton(
+                    text: 'Back to Home',
+                    variant: AppButtonVariant.outline,
+                    onPressed: () => context.go('/'),
+                  ),
+                ] else ...[
+                  AppButton(
+                    text: 'Back to Home',
+                    onPressed: () => context.go('/'),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 48),
-            ElevatedButton(
-              onPressed: () => context.go('/'),
-              child: const Text('Back to Home'),
-            ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-}
-
-class _StatusIcon extends StatelessWidget {
-  final String kycStatus;
-  const _StatusIcon({required this.kycStatus});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final Color color;
-    final IconData icon;
-
-    switch (kycStatus) {
-      case 'Approved':
-        color = colorScheme.primary;
-        icon = LucideIcons.circleCheck;
-        break;
-      case 'Rejected':
-        color = colorScheme.error;
-        icon = LucideIcons.circleX;
-        break;
-      default:
-        color = Colors.orange;
-        icon = LucideIcons.clock;
-    }
-
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: color, size: 50),
     );
   }
 }
