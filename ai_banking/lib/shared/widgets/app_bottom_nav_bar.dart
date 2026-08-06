@@ -15,10 +15,10 @@ class AppBottomNavBar extends StatelessWidget {
   static const _qrProtrusion = 18.0;
 
   static const _items = [
-    _NavItemData(icon: Icons.dashboard, label: 'Home'),
-    _NavItemData(icon: Icons.account_balance_wallet, label: 'Wallet'),
+    _NavItemData(icon: Icons.dashboard_rounded, label: 'Home'),
+    _NavItemData(icon: Icons.grid_view_rounded, label: 'Products'),
     _NavItemData(icon: Icons.bar_chart_rounded, label: 'Analytics'),
-    _NavItemData(icon: Icons.person, label: 'Profile'),
+    _NavItemData(icon: Icons.person_rounded, label: 'Profile'),
   ];
 
   @override
@@ -135,10 +135,11 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               data.label,
-              style: (isSelected
-                      ? navTheme.selectedLabelStyle
-                      : navTheme.unselectedLabelStyle)
-                  ?.copyWith(color: color),
+              style:
+                  (isSelected
+                          ? navTheme.selectedLabelStyle
+                          : navTheme.unselectedLabelStyle)
+                      ?.copyWith(color: color),
             ),
           ],
         ),
@@ -148,10 +149,7 @@ class _NavItem extends StatelessWidget {
 }
 
 class _QrLabel extends StatelessWidget {
-  const _QrLabel({
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _QrLabel({required this.isSelected, required this.onTap});
 
   final bool isSelected;
   final VoidCallback onTap;
@@ -176,10 +174,11 @@ class _QrLabel extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'QR',
-              style: (isSelected
-                      ? navTheme.selectedLabelStyle
-                      : navTheme.unselectedLabelStyle)
-                  ?.copyWith(color: color),
+              style:
+                  (isSelected
+                          ? navTheme.selectedLabelStyle
+                          : navTheme.unselectedLabelStyle)
+                      ?.copyWith(color: color),
             ),
           ],
         ),
@@ -189,10 +188,7 @@ class _QrLabel extends StatelessWidget {
 }
 
 class _QrCircleButton extends StatelessWidget {
-  const _QrCircleButton({
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _QrCircleButton({required this.isSelected, required this.onTap});
 
   final bool isSelected;
   final VoidCallback onTap;

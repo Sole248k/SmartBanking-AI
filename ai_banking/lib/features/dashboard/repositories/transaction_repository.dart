@@ -13,8 +13,16 @@ abstract class TransactionRepository {
   Stream<List<Transaction>> watchRecentTransactions({int limit = 10});
   Future<Either<Failure, Account>> getAccountDetails(String id);
   Future<Either<Failure, Account>> addExternalCard(Account account);
-  Future<Either<Failure, void>> updateCardStatus(String accountId, AccountStatus status);
-  Future<Either<Failure, void>> updateCardNickname(String accountId, String nickname);
+  Future<Either<Failure, void>> updateCardStatus(
+    String accountId,
+    AccountStatus status,
+  );
+  Future<Either<Failure, void>> updateCardNickname(
+    String accountId,
+    String nickname,
+  );
   Future<Either<Failure, void>> setDefaultCard(String accountId);
   Future<Either<Failure, void>> removeCard(String accountId);
+  Future<Either<Failure, Account>> createAccount(Account account, {double initialDeposit = 0.0});
 }
+

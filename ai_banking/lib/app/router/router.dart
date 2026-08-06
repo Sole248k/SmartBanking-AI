@@ -37,6 +37,11 @@ import '../../features/transactions/presentation/transaction_history_screen.dart
 import '../../features/transactions/presentation/transaction_details_screen.dart';
 import '../../features/dashboard/models/transaction.dart';
 import '../../shared/models/account.dart';
+import '../../features/products/presentation/products_screen.dart';
+import '../../features/products/presentation/new_account_screen.dart';
+import '../../features/products/presentation/account_review_screen.dart';
+import '../../features/products/presentation/account_success_screen.dart';
+
 
 import '../../shared/providers/session_lock_provider.dart';
 
@@ -65,7 +70,8 @@ GoRouter router(RouterRef ref) {
           state.matchedLocation == '/welcome';
 
       final isLoadingRoute = state.matchedLocation == '/loading';
-      final isPinRoute = state.matchedLocation == '/setup-pin' ||
+      final isPinRoute =
+          state.matchedLocation == '/setup-pin' ||
           state.matchedLocation == '/pin-lock';
 
       if (user == null) {
@@ -76,7 +82,8 @@ GoRouter router(RouterRef ref) {
       // Logged in & session locked → enforce PIN lock screen for accounts with a PIN
       if (isSessionLocked && !isPinRoute) {
         final profile = profileAsync.value;
-        final hasPin = profile != null &&
+        final hasPin =
+            profile != null &&
             profile.pinHash != null &&
             profile.pinHash!.isNotEmpty;
         if (hasPin) {
@@ -113,16 +120,11 @@ GoRouter router(RouterRef ref) {
         path: '/pin-lock',
         builder: (context, state) => const PinLockScreen(),
       ),
-      GoRoute(
-        path: '/kyc',
-        builder: (context, state) => const KycMainFlow(),
-      ),
+      GoRoute(path: '/kyc', builder: (context, state) => const KycMainFlow()),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) => _ShellScaffold(
-          state: state,
-          child: child,
-        ),
+        builder: (context, state, child) =>
+            _ShellScaffold(state: state, child: child),
         routes: [
           GoRoute(
             path: '/',
@@ -237,15 +239,43 @@ GoRouter router(RouterRef ref) {
               ),
             ],
           ),
+          GoRoute(
+            path: '/products',
+            builder: (context, state) => const ProductsScreen(),
+            routes: [
+              GoRoute(
+                path: 'new-account',
+                builder: (context, state) {
+                  final type = state.extra as AccountType?;
+                  return NewAccountScreen(initialAccountType: type);
+                },
+              ),
+              GoRoute(
+                path: 'review',
+                builder: (context, state) {
+                  final data = state.extra as Map<String, dynamic>;
+                  return AccountReviewScreen(applicationData: data);
+                },
+              ),
+              GoRoute(
+                path: 'success',
+                builder: (context, state) {
+                  final data = state.extra as Map<String, dynamic>;
+                  return AccountSuccessScreen(successData: data);
+                },
+              ),
+            ],
+          ),
         ],
       ),
     ],
   );
+
 }
 
 int _calculateSelectedIndex(String location) {
   if (location == '/') return 0;
-  if (location.startsWith('/wallet')) return 1;
+  if (location.startsWith('/products')) return 1;
   if (_isQrRoute(location)) return 2;
   if (location.startsWith('/analytics')) return 3;
   if (location.startsWith('/profile')) return 4;
@@ -265,7 +295,7 @@ void _onItemTapped(int index, BuildContext context) {
       context.go('/');
       break;
     case 1:
-      context.go('/wallet');
+      context.go('/products');
       break;
     case 2:
       context.go('/qr');
@@ -278,6 +308,7 @@ void _onItemTapped(int index, BuildContext context) {
       break;
   }
 }
+
 
 /// Shell scaffold with an intelligent, draggable, edge-snapping AI Assistant FAB.
 ///
@@ -370,10 +401,14 @@ class _ShellScaffoldState extends State<_ShellScaffold> {
                 onPanUpdate: (details) {
                   setState(() {
                     _isDragging = true;
-                    _fabRight = (_fabRight - details.delta.dx)
-                        .clamp(16.0, size.width - 72.0);
-                    _fabBottom = (_fabBottom - details.delta.dy)
-                        .clamp(80.0, size.height - 120.0);
+                    _fabRight = (_fabRight - details.delta.dx).clamp(
+                      16.0,
+                      size.width - 72.0,
+                    );
+                    _fabBottom = (_fabBottom - details.delta.dy).clamp(
+                      80.0,
+                      size.height - 120.0,
+                    );
                   });
                 },
                 onPanEnd: (details) {

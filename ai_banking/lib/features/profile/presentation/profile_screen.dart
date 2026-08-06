@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/constants/app_constants.dart';
@@ -26,7 +26,8 @@ class ProfileScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh',
-            onPressed: () => ref.read(profileControllerProvider.notifier).refresh(),
+            onPressed: () =>
+                ref.read(profileControllerProvider.notifier).refresh(),
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Colors.red),
@@ -37,7 +38,11 @@ class ProfileScreen extends ConsumerWidget {
       body: profileAsync.when(
         data: (profile) {
           if (profile.id.isEmpty) {
-            return _buildErrorState(context, ref, 'Please log in to view your profile.');
+            return _buildErrorState(
+              context,
+              ref,
+              'Please log in to view your profile.',
+            );
           }
           return _buildProfileContent(context, ref, profile);
         },
@@ -70,7 +75,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileContent(BuildContext context, WidgetRef ref, dynamic profile) {
+  Widget _buildProfileContent(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic profile,
+  ) {
     final theme = Theme.of(context);
     final kycColor = _kycColor(profile.kycStatus);
     final kycIcon = _kycIcon(profile.kycStatus);
@@ -79,11 +88,17 @@ class ProfileScreen extends ConsumerWidget {
       padding: AppConstants.screenPadding,
       child: Column(
         children: [
-          AppAvatar(name: profile.fullName, imageUrl: profile.avatarUrl, size: 100),
+          AppAvatar(
+            name: profile.fullName,
+            imageUrl: profile.avatarUrl,
+            size: 100,
+          ),
           const SizedBox(height: AppConstants.md),
           Text(
             profile.fullName,
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           Text(
             profile.email,
@@ -118,8 +133,9 @@ class ProfileScreen extends ConsumerWidget {
                 leading: const Icon(Icons.fingerprint),
                 trailing: Switch.adaptive(
                   value: profile.isBiometricEnabled,
-                  onChanged: (val) =>
-                      ref.read(profileControllerProvider.notifier).toggleBiometrics(val),
+                  onChanged: (val) => ref
+                      .read(profileControllerProvider.notifier)
+                      .toggleBiometrics(val),
                 ),
               ),
               AppListTile(
@@ -137,7 +153,10 @@ class ProfileScreen extends ConsumerWidget {
               AppListTile(
                 title: const Text('AI Banking Assistant'),
                 subtitle: const Text('Chat with SmartBank AI 24/7'),
-                leading: const Icon(Icons.auto_awesome_rounded, color: Colors.blueAccent),
+                leading: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.blueAccent,
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/ai-assistant'),
               ),
@@ -152,8 +171,9 @@ class ProfileScreen extends ConsumerWidget {
                 leading: const Icon(Icons.notifications_none),
                 trailing: Switch.adaptive(
                   value: profile.pushNotificationsEnabled,
-                  onChanged: (val) =>
-                      ref.read(profileControllerProvider.notifier).toggleNotifications(val),
+                  onChanged: (val) => ref
+                      .read(profileControllerProvider.notifier)
+                      .toggleNotifications(val),
                 ),
               ),
               AppListTile(
@@ -161,7 +181,8 @@ class ProfileScreen extends ConsumerWidget {
                 leading: const Icon(Icons.dark_mode_outlined),
                 trailing: Switch.adaptive(
                   value: ref.watch(appThemeModeProvider) == ThemeMode.dark,
-                  onChanged: (_) => ref.read(appThemeModeProvider.notifier).toggleTheme(),
+                  onChanged: (_) =>
+                      ref.read(appThemeModeProvider.notifier).toggleTheme(),
                 ),
               ),
               AppListTile(
@@ -169,7 +190,8 @@ class ProfileScreen extends ConsumerWidget {
                 leading: const Icon(Icons.security_rounded),
                 trailing: Switch.adaptive(
                   value: ref.watch(privacyModeProvider),
-                  onChanged: (_) => ref.read(privacyModeProvider.notifier).toggle(),
+                  onChanged: (_) =>
+                      ref.read(privacyModeProvider.notifier).toggle(),
                 ),
               ),
             ],
@@ -229,7 +251,8 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: AppConstants.md),
           AppButton(
             text: 'Retry',
-            onPressed: () => ref.read(profileControllerProvider.notifier).refresh(),
+            onPressed: () =>
+                ref.read(profileControllerProvider.notifier).refresh(),
           ),
           const SizedBox(height: AppConstants.md),
           if (error.contains('logged in'))
@@ -246,10 +269,22 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildDevTools(BuildContext context, WidgetRef ref) {
-    if (!kDebugMode) return const SizedBox.shrink();
     return _Section(
       title: 'Developer Tools',
       children: [
+        AppListTile(
+          title: const Text('Approve Pending KYC Requests'),
+          subtitle: const Text('Instantly change pending KYC status to Approved'),
+          leading: const Icon(Icons.verified_rounded, color: Colors.green),
+          onTap: () async {
+            await ref.read(profileControllerProvider.notifier).approveKyc();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('KYC Status Approved successfully!')),
+              );
+            }
+          },
+        ),
         AppListTile(
           title: const Text('Seed Database'),
           subtitle: const Text('Populate Firestore with mock data'),
@@ -279,6 +314,7 @@ class ProfileScreen extends ConsumerWidget {
       ],
     );
   }
+
 }
 
 class _Section extends StatelessWidget {
@@ -296,9 +332,9 @@ class _Section extends StatelessWidget {
           child: Text(
             title,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ),
         ...children,

@@ -29,20 +29,21 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
           'createdAt': FieldValue.serverTimestamp(),
         };
         await _firestore.collection('profiles').doc(user.uid).set(profileData);
-        return right(UserProfile(
-          id: user.uid,
-          fullName: user.displayName ?? 'SmartBank User',
-          email: user.email ?? '',
-        ));
+        return right(
+          UserProfile(
+            id: user.uid,
+            fullName: user.displayName ?? 'SmartBank User',
+            email: user.email ?? '',
+          ),
+        );
       }
 
       final data = doc.data()!;
       // Ensure email is always populated (self-heal for older records)
       if (data['email'] == null || (data['email'] as String).isEmpty) {
-        await _firestore
-            .collection('profiles')
-            .doc(user.uid)
-            .update({'email': user.email ?? ''});
+        await _firestore.collection('profiles').doc(user.uid).update({
+          'email': user.email ?? '',
+        });
         data['email'] = user.email ?? '';
       }
 
@@ -53,7 +54,9 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, UserProfile>> updateProfile(UserProfile profile) async {
+  Future<Either<Failure, UserProfile>> updateProfile(
+    UserProfile profile,
+  ) async {
     try {
       await _firestore
           .collection('profiles')
@@ -70,10 +73,9 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        await _firestore
-            .collection('profiles')
-            .doc(user.uid)
-            .update({'isBiometricEnabled': enabled});
+        await _firestore.collection('profiles').doc(user.uid).update({
+          'isBiometricEnabled': enabled,
+        });
       }
       return right(null);
     } catch (e) {
@@ -100,7 +102,9 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, void>> recordFailedPinAttempt(int currentAttempts) async {
+  Future<Either<Failure, void>> recordFailedPinAttempt(
+    int currentAttempts,
+  ) async {
     try {
       final user = _auth.currentUser;
       if (user == null) return left(const AuthFailure('User not logged in'));
@@ -110,8 +114,9 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
 
       if (newAttempts >= 5) {
         // Lock for 5 minutes
-        updates['pinLockedUntil'] =
-            DateTime.now().add(const Duration(minutes: 5)).toIso8601String();
+        updates['pinLockedUntil'] = DateTime.now()
+            .add(const Duration(minutes: 5))
+            .toIso8601String();
       }
 
       await _firestore.collection('profiles').doc(user.uid).update(updates);
@@ -136,4 +141,20 @@ class FirestoreProfileRepositoryImpl implements ProfileRepository {
       return left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> updateKycStatus(String status) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return left(const AuthFailure('User not logged in'));
+
+      await _firestore.collection('profiles').doc(user.uid).update({
+        'kycStatus': status,
+      });
+      return right(null);
+    } catch (e) {
+      return left(ServerFailure(e.toString()));
+    }
+  }
 }
+

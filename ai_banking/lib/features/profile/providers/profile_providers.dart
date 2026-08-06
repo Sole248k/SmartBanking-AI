@@ -38,11 +38,7 @@ class ProfileController extends _$ProfileController {
 
     // Fallback: build a minimal profile from the auth user so the UI
     // always shows real data even if Firestore is slow.
-    return UserProfile(
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-    );
+    return UserProfile(id: user.id, fullName: user.fullName, email: user.email);
   }
 
   Future<void> refresh() async {
@@ -63,4 +59,12 @@ class ProfileController extends _$ProfileController {
     await ref.read(profileRepositoryProvider).updateProfile(updated);
     state = AsyncData(updated);
   }
+
+  Future<void> approveKyc() async {
+    final currentProfile = state.value;
+    if (currentProfile == null) return;
+    await ref.read(profileRepositoryProvider).updateKycStatus('Approved');
+    state = AsyncData(currentProfile.copyWith(kycStatus: 'Approved'));
+  }
 }
+

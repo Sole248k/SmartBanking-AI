@@ -165,7 +165,9 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
           .get();
 
       if (existing.docs.isNotEmpty) {
-        return left(const ServerFailure('This card is already linked to your account'));
+        return left(
+          const ServerFailure('This card is already linked to your account'),
+        );
       }
 
       // Generate a one-time demo balance between ₱5,000 and ₱99,999 if 0
@@ -211,7 +213,10 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateCardStatus(String accountId, AccountStatus status) async {
+  Future<Either<Failure, void>> updateCardStatus(
+    String accountId,
+    AccountStatus status,
+  ) async {
     try {
       await _firestore.collection('accounts').doc(accountId).update({
         'status': status.name,
@@ -223,7 +228,10 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateCardNickname(String accountId, String nickname) async {
+  Future<Either<Failure, void>> updateCardNickname(
+    String accountId,
+    String nickname,
+  ) async {
     try {
       await _firestore.collection('accounts').doc(accountId).update({
         'nickname': nickname,
@@ -264,4 +272,44 @@ class FirestoreTransactionRepositoryImpl implements TransactionRepository {
       return left(ServerFailure('Failed to remove card: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, Account>> createAccount(Account account, {double initialDeposit = 0.0}) async {
+    try {
+      if (_uid == null) return left(const AuthFailure('User not logged in'));
+
+      final createdAccount = account.copyWith(
+        userId: _uid!,
+        balance: initialDeposit,
+        availableBalance: initialDeposit,
+        linkedAt: DateTime.now().toIso8601String(),
+      );
+
+      final docRef = await _firestore.collection('accounts').add({
+        ...createdAccount.toJson(),
+        'userId': _uid,
+        'linkedAt': DateTime.now().toIso8601String(),
+      });
+
+      if (initialDeposit > 0) {
+        await _firestore.collection('transactions').add({
+          'userId': _uid,
+          'accountId': docRef.id,
+          'title': 'Initial Account Deposit',
+          'description': 'Opened new ${account.label}',
+          'amount': initialDeposit,
+          'date': FieldValue.serverTimestamp(),
+          'category': 'Deposit',
+          'status': 'completed',
+          'type': 'credit',
+        });
+      }
+
+      final resultAccount = createdAccount.copyWith(id: docRef.id);
+      return right(resultAccount);
+    } catch (e) {
+      return left(ServerFailure('Failed to create account: $e'));
+    }
+  }
 }
+

@@ -9,4 +9,6 @@ abstract class ProfileRepository {
   Future<Either<Failure, void>> setSecurityPin(String pinHash);
   Future<Either<Failure, void>> recordFailedPinAttempt(int currentAttempts);
   Future<Either<Failure, void>> resetPinAttempts();
+  Future<Either<Failure, void>> updateKycStatus(String status);
 }
+

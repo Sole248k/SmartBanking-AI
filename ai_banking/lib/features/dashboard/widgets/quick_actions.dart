@@ -28,9 +28,9 @@ class QuickActions extends StatelessWidget {
               onTap: () => context.push('/pay-bills'),
             ),
             _ActionButton(
-              icon: Icons.add_circle_outline_rounded,
-              label: 'Top-up',
-              onTap: () => context.push('/wallet/top-up'),
+              icon: Icons.account_balance_wallet_rounded,
+              label: 'Wallet',
+              onTap: () => context.push('/wallet'),
             ),
           ],
         ),
@@ -66,7 +66,6 @@ class QuickActions extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-
   const _ActionButton({
     required this.icon,
     required this.label,
