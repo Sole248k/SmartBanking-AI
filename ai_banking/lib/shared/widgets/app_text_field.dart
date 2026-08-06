@@ -18,6 +18,7 @@ class AppTextField extends StatelessWidget {
     this.readOnly = false,
     this.inputFormatters,
     this.textCapitalization = TextCapitalization.none,
+    this.errorText,
   });
   final String? label;
   final String? hint;
@@ -31,6 +32,9 @@ class AppTextField extends StatelessWidget {
   final bool readOnly;
   final List<TextInputFormatter>? inputFormatters;
   final TextCapitalization textCapitalization;
+  /// When non-null, forces the field into error state and shows this text.
+  /// Pass an empty string to highlight the border without adding a message.
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +65,7 @@ class AppTextField extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,
+            errorText: errorText,
             prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 20) : null,
             suffixIcon: suffixIcon,
             filled: true,
