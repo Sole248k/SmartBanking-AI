@@ -84,7 +84,19 @@ class WelcomeScreen extends StatelessWidget {
               onPressed: () => context.push('/login'),
             ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.2),
             
-            const SizedBox(height: AppConstants.xl),
+            const SizedBox(height: AppConstants.sm),
+
+            TextButton.icon(
+              onPressed: () => context.push('/admin/login'),
+              icon: const Icon(Icons.admin_panel_settings_outlined, size: 16),
+              label: const Text('Admin Portal'),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ).animate(delay: 600.ms).fadeIn(),
+
+            const SizedBox(height: AppConstants.md),
           ],
         ),
       ),

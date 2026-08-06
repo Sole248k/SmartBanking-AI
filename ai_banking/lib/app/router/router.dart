@@ -44,6 +44,16 @@ import '../../features/products/presentation/new_account_screen.dart';
 import '../../features/products/presentation/account_review_screen.dart';
 import '../../features/products/presentation/account_success_screen.dart';
 import '../../features/invest/presentation/investment_screen.dart';
+import '../../features/products/presentation/application_status_screen.dart';
+import '../../features/admin/presentation/admin_login_screen.dart';
+import '../../features/admin/presentation/admin_shell.dart';
+import '../../features/admin/presentation/admin_dashboard_screen.dart';
+import '../../features/admin/presentation/kyc_queue_screen.dart';
+import '../../features/admin/presentation/product_applications_screen.dart';
+import '../../features/admin/presentation/audit_log_screen.dart';
+import '../../features/admin/presentation/user_search_screen.dart';
+import '../../features/admin/presentation/admin_management_screen.dart';
+import '../../features/admin/providers/admin_auth_provider.dart';
 
 
 import '../../shared/providers/session_lock_provider.dart';
@@ -52,12 +62,14 @@ part 'router.g.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
+final _adminNavigatorKey = GlobalKey<NavigatorState>();
 
 @riverpod
 GoRouter router(RouterRef ref) {
   final authState = ref.watch(authStateChangesProvider);
   final isSessionLocked = ref.watch(sessionLockControllerProvider);
   final profileAsync = ref.watch(profileControllerProvider);
+  final adminAuthAsync = ref.watch(adminAuthNotifierProvider);
 
   return GoRouter(
     initialLocation: '/welcome',
@@ -76,6 +88,17 @@ GoRouter router(RouterRef ref) {
       final isPinRoute =
           state.matchedLocation == '/setup-pin' ||
           state.matchedLocation == '/pin-lock';
+
+      final isAdminRoute = state.matchedLocation.startsWith('/admin');
+
+      // If user is authenticated as an Admin, force redirect to /admin dashboard
+      final currentAdmin = adminAuthAsync.value;
+      if (currentAdmin != null) {
+        if (!isAdminRoute) return '/admin';
+        return null;
+      }
+
+      if (isAdminRoute) return null;
 
       if (user == null) {
         // Not logged in → only allow auth routes; redirect everything else to welcome
@@ -124,6 +147,54 @@ GoRouter router(RouterRef ref) {
         builder: (context, state) => const PinLockScreen(),
       ),
       GoRoute(path: '/kyc', builder: (context, state) => const KycMainFlow()),
+
+      // ──────────────────────────────────────────
+      // Admin Portal Routes (isolated from user shell)
+      // ──────────────────────────────────────────
+      GoRoute(
+        path: '/admin/login',
+        builder: (context, state) => const AdminLoginScreen(),
+      ),
+      ShellRoute(
+        navigatorKey: _adminNavigatorKey,
+        builder: (context, state, child) => AdminShell(
+          child: child,
+          location: state.fullPath ?? '/admin',
+        ),
+        redirect: (context, state) async {
+          // Verify admin auth before rendering any /admin/* route
+          if (adminAuthAsync.isLoading) return null;
+          final admin = adminAuthAsync.value;
+          if (admin == null) return '/admin/login';
+          return null;
+        },
+        routes: [
+          GoRoute(
+            path: '/admin',
+            builder: (context, state) => const AdminDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/admin/kyc',
+            builder: (context, state) => const KycQueueScreen(),
+          ),
+          GoRoute(
+            path: '/admin/applications',
+            builder: (context, state) => const ProductApplicationsScreen(),
+          ),
+          GoRoute(
+            path: '/admin/audit',
+            builder: (context, state) => const AuditLogScreen(),
+          ),
+          GoRoute(
+            path: '/admin/users',
+            builder: (context, state) => const UserSearchScreen(),
+          ),
+          GoRoute(
+            path: '/admin/manage-admins',
+            builder: (context, state) => const AdminManagementScreen(),
+          ),
+        ],
+      ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) =>
@@ -273,6 +344,10 @@ GoRouter router(RouterRef ref) {
                   final data = state.extra as Map<String, dynamic>;
                   return AccountSuccessScreen(successData: data);
                 },
+              ),
+              GoRoute(
+                path: 'status',
+                builder: (context, state) => const ApplicationStatusScreen(),
               ),
             ],
           ),
