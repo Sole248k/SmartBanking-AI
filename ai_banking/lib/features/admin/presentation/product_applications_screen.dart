@@ -211,8 +211,10 @@ class _ApplicationTabContent extends ConsumerWidget {
           padding: const EdgeInsets.all(28),
           itemCount: filtered.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (_, i) =>
-              _ApplicationCard(application: filtered[i]),
+          itemBuilder: (_, i) => _ApplicationCard(
+            key: ValueKey(filtered[i].id),
+            application: filtered[i],
+          ),
         );
       },
       loading: () => const Center(
@@ -231,7 +233,7 @@ class _ApplicationTabContent extends ConsumerWidget {
 // ──────────────────────────────────────────
 
 class _ApplicationCard extends ConsumerStatefulWidget {
-  const _ApplicationCard({required this.application});
+  const _ApplicationCard({super.key, required this.application});
 
   final ProductApplication application;
 

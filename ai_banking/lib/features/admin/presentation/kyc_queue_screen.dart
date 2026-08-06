@@ -210,8 +210,10 @@ class _KycTabContent extends ConsumerWidget {
           padding: const EdgeInsets.all(28),
           itemCount: filtered.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) =>
-              _KycRecordCard(record: filtered[i]),
+          itemBuilder: (context, i) => _KycRecordCard(
+            key: ValueKey(filtered[i]['id'] ?? filtered[i]['userId'] ?? 'kyc_$i'),
+            record: filtered[i],
+          ),
         );
       },
       loading: () => const Center(
@@ -230,7 +232,7 @@ class _KycTabContent extends ConsumerWidget {
 // ──────────────────────────────────────────
 
 class _KycRecordCard extends ConsumerStatefulWidget {
-  const _KycRecordCard({required this.record});
+  const _KycRecordCard({super.key, required this.record});
   final Map<String, dynamic> record;
 
   @override

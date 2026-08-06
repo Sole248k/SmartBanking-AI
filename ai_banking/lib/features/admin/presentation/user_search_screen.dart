@@ -190,8 +190,10 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                         itemCount: _results.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 10),
-                        itemBuilder: (_, i) =>
-                            _CustomerCard(user: _results[i]),
+                        itemBuilder: (_, i) => _CustomerCard(
+                          key: ValueKey(_results[i]['uid'] ?? 'usr_$i'),
+                          user: _results[i],
+                        ),
                       ),
           ),
         ],
@@ -205,7 +207,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
 // ──────────────────────────────────────────
 
 class _CustomerCard extends StatefulWidget {
-  const _CustomerCard({required this.user});
+  const _CustomerCard({super.key, required this.user});
 
   final Map<String, dynamic> user;
 

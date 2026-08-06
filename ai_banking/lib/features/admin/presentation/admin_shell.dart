@@ -188,6 +188,7 @@ class _AdminSideNav extends StatelessWidget {
                   ),
                 ),
                 ...items.map((item) => _NavItem(
+                      key: ValueKey(item.route),
                       item: item,
                       isActive: currentLocation.startsWith(item.route),
                     )),
@@ -280,7 +281,7 @@ class _NavItemData {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.item, required this.isActive});
+  const _NavItem({super.key, required this.item, required this.isActive});
 
   final _NavItemData item;
   final bool isActive;

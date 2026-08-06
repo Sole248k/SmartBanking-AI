@@ -122,7 +122,10 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
                   padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
                   itemCount: filtered.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) => _AuditLogCard(log: filtered[i]),
+                  itemBuilder: (_, i) => _AuditLogCard(
+                    key: ValueKey(filtered[i].id),
+                    log: filtered[i],
+                  ),
                 );
               },
               loading: () => const Center(
@@ -184,7 +187,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
 }
 
 class _AuditLogCard extends StatelessWidget {
-  const _AuditLogCard({required this.log});
+  const _AuditLogCard({super.key, required this.log});
 
   final AuditLog log;
 
