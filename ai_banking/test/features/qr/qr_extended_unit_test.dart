@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:ai_banking/core/errors/failure.dart';
 import 'package:ai_banking/features/qr/models/qr_data.dart';
+import 'package:ai_banking/features/qr/models/qr_transfer_args.dart';
 import 'package:ai_banking/features/qr/presentation/qr_transfer_review_screen.dart';
 import 'package:ai_banking/features/transfer/models/beneficiary.dart';
 import 'package:ai_banking/features/transfer/models/transfer_state.dart';
@@ -271,10 +272,12 @@ void main() {
           GoRoute(
             path: '/r',
             builder: (context, _) => QrTransferReviewScreen(
-              qrData: QrData(
-                recipientId: 'id',
-                recipientName: 'Test User',
-                accountNumber: accountNumber,
+              args: QrTransferArgs(
+                qrData: QrData(
+                  recipientId: 'id',
+                  recipientName: 'Test User',
+                  accountNumber: accountNumber,
+                ),
               ),
             ),
           ),
@@ -360,7 +363,8 @@ void main() {
         routes: [
           GoRoute(
             path: '/r',
-            builder: (context, _) => QrTransferReviewScreen(qrData: qr),
+            builder: (context, _) => QrTransferReviewScreen(
+                args: QrTransferArgs(qrData: qr)),
           ),
           GoRoute(
             path: '/transfer',

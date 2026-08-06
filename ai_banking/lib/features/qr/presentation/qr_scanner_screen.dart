@@ -1,17 +1,22 @@
-import 'dart:io';
+import 'dart:async';
+// ignore_for_file: prefer_const_constructors
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../transfer/providers/transfer_providers.dart';
 import '../models/qr_data.dart';
+import '../models/qr_transfer_args.dart';
 import '../providers/qr_providers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Scanner overlay painter — draws a dark mask with a transparent cutout so
-// the camera feed is visible through the scanning frame.
+// Scanner overlay — dark mask with transparent cutout
 // ─────────────────────────────────────────────────────────────────────────────
+
 class _ScannerOverlayPainter extends CustomPainter {
   const _ScannerOverlayPainter({
     required this.frameSize,
@@ -36,7 +41,6 @@ class _ScannerOverlayPainter extends CustomPainter {
       Radius.circular(borderRadius),
     );
 
-    // Dark mask covering entire canvas
     final maskPaint = Paint()..color = Colors.black.withValues(alpha: 0.62);
     final path = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
@@ -44,14 +48,13 @@ class _ScannerOverlayPainter extends CustomPainter {
       ..fillType = PathFillType.evenOdd;
     canvas.drawPath(path, maskPaint);
 
-    // Corner brackets
     final cornerPaint = Paint()
       ..color = borderColor
       ..strokeWidth = borderWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    const cLen = 24.0; // corner arm length
+    const cLen = 24.0;
     final l = cx - half;
     final t = cy - half;
     final r = cx + half;
@@ -62,17 +65,14 @@ class _ScannerOverlayPainter extends CustomPainter {
     canvas.drawLine(Offset(l + cr, t), Offset(l + cr + cLen, t), cornerPaint);
     canvas.drawLine(Offset(l, t + cr), Offset(l, t + cr + cLen), cornerPaint);
     canvas.drawArc(Rect.fromLTWH(l, t, cr * 2, cr * 2), -3.14159, 3.14159 / 2, false, cornerPaint);
-
     // Top-right
     canvas.drawLine(Offset(r - cr - cLen, t), Offset(r - cr, t), cornerPaint);
     canvas.drawLine(Offset(r, t + cr), Offset(r, t + cr + cLen), cornerPaint);
     canvas.drawArc(Rect.fromLTWH(r - cr * 2, t, cr * 2, cr * 2), -3.14159 / 2, 3.14159 / 2, false, cornerPaint);
-
     // Bottom-left
     canvas.drawLine(Offset(l + cr, b), Offset(l + cr + cLen, b), cornerPaint);
     canvas.drawLine(Offset(l, b - cr - cLen), Offset(l, b - cr), cornerPaint);
     canvas.drawArc(Rect.fromLTWH(l, b - cr * 2, cr * 2, cr * 2), 3.14159 / 2, 3.14159 / 2, false, cornerPaint);
-
     // Bottom-right
     canvas.drawLine(Offset(r - cr - cLen, b), Offset(r - cr, b), cornerPaint);
     canvas.drawLine(Offset(r, b - cr - cLen), Offset(r, b - cr), cornerPaint);
@@ -87,8 +87,9 @@ class _ScannerOverlayPainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Animated scan line that sweeps inside the viewport
+// Animated scan line
 // ─────────────────────────────────────────────────────────────────────────────
+
 class _ScanLine extends StatefulWidget {
   const _ScanLine({required this.frameSize});
   final double frameSize;
@@ -124,12 +125,10 @@ class _ScanLineState extends State<_ScanLine>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (context, _) {
-        return CustomPaint(
-          size: Size(widget.frameSize, widget.frameSize),
-          painter: _LinePainter(progress: _anim.value),
-        );
-      },
+      builder: (context, _) => CustomPaint(
+        size: Size(widget.frameSize, widget.frameSize),
+        painter: _LinePainter(progress: _anim.value),
+      ),
     );
   }
 }
@@ -159,8 +158,49 @@ class _LinePainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main scanner screen
+// Processing stage — drives the label and overlay copy
 // ─────────────────────────────────────────────────────────────────────────────
+
+enum _ScanStage { scanning, parsing, lookingUp }
+
+extension _ScanStageCopy on _ScanStage {
+  String get headline {
+    switch (this) {
+      case _ScanStage.scanning:
+        return 'Align the QR code within the frame';
+      case _ScanStage.parsing:
+        return 'Reading QR Code…';
+      case _ScanStage.lookingUp:
+        return 'Verifying recipient…';
+    }
+  }
+
+  String get subtext {
+    switch (this) {
+      case _ScanStage.scanning:
+        return 'Scanning happens automatically';
+      case _ScanStage.parsing:
+        return 'Please wait';
+      case _ScanStage.lookingUp:
+        return 'Fetching account details from server';
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QrScannerScreen
+//
+// Full pipeline:
+//   camera detect
+//     → parse (QrRepositoryImpl — security, expiry, format checks)
+//     → backend lookup (TransferRepository.lookupRecipient — Firestore)
+//     → self-transfer guard
+//     → navigate to QrTransferReviewScreen with QrTransferArgs
+//
+// The review screen is SELF-CONTAINED — it never bounces the user to the
+// generic Send Money form.
+// ─────────────────────────────────────────────────────────────────────────────
+
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
 
@@ -172,8 +212,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
   final MobileScannerController _scannerCtrl = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
   );
-  bool _isProcessing = false;
+
+  _ScanStage _stage = _ScanStage.scanning;
   bool _torchOn = false;
+
+  bool get _isProcessing => _stage != _ScanStage.scanning;
 
   @override
   void dispose() {
@@ -181,41 +224,87 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
     super.dispose();
   }
 
-  // ── QR processing ─────────────────────────────────────────────────────────
+  // ── Pipeline ──────────────────────────────────────────────────────────────
 
   Future<void> _onDetect(String rawValue) async {
     if (_isProcessing) return;
-    setState(() => _isProcessing = true);
+    _setStage(_ScanStage.parsing);
 
-    final result = await ref.read(qrRepositoryProvider).parseQrCode(rawValue);
+    // Step 1 — Parse & validate QR payload
+    final parseResult =
+        await ref.read(qrRepositoryProvider).parseQrCode(rawValue);
 
     if (!mounted) return;
 
-    result.fold(
+    parseResult.fold(
       (failure) {
-        setState(() => _isProcessing = false);
-        _showError(failure.message);
+        _setStage(_ScanStage.scanning);
+        _showError('Invalid QR Code', failure.message);
       },
-      _navigateToReview,
+      (qrData) => unawaited(_lookupAndNavigate(qrData)),
     );
   }
 
-  void _navigateToReview(QrData qrData) {
-    context.pushReplacement('/qr-transfer-review', extra: qrData);
+  Future<void> _lookupAndNavigate(QrData qrData) async {
+    _setStage(_ScanStage.lookingUp);
+
+    // Step 2 — Connectivity check
+    final online = await _isOnline();
+    if (!mounted) return;
+    if (!online) {
+      _setStage(_ScanStage.scanning);
+      _showError(
+        'No Internet Connection',
+        'Please check your network and try again.',
+      );
+      return;
+    }
+
+    // Step 3 — Backend recipient lookup by account number
+    final lookupResult = await ref
+        .read(transferRepositoryProvider)
+        .lookupRecipient(qrData.accountNumber);
+
+    if (!mounted) return;
+
+    lookupResult.fold(
+      (failure) {
+        _setStage(_ScanStage.scanning);
+        _showError('Recipient Lookup Failed', failure.message);
+      },
+      (recipient) {
+        // Step 4 — Self-transfer guard (authoritative check via Firestore userId)
+        if (recipient != null) {
+          final currentUid = FirebaseAuth.instance.currentUser?.uid;
+          if (currentUid != null && recipient.userId == currentUid) {
+            _setStage(_ScanStage.scanning);
+            _showError(
+              'Self-Transfer Not Allowed',
+              'You cannot transfer money to your own account.',
+            );
+            return;
+          }
+        }
+
+        // Step 5 — Navigate: reset stage first to avoid double-processing
+        _setStage(_ScanStage.scanning);
+        context.pushReplacement(
+          '/qr-transfer-review',
+          extra: QrTransferArgs(qrData: qrData, recipient: recipient),
+        );
+      },
+    );
   }
 
-  // ── Gallery / image fallback ───────────────────────────────────────────────
+  // ── Gallery fallback ──────────────────────────────────────────────────────
 
   Future<void> _pickFromGallery() async {
+    if (_isProcessing) return;
     try {
-      final picker = ImagePicker();
-      final XFile? image =
-          await picker.pickImage(source: ImageSource.gallery);
+      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (image == null) return;
 
-      setState(() => _isProcessing = true);
-
-      // Analyse the image file with MobileScanner's analyzeImage
+      _setStage(_ScanStage.parsing);
       final BarcodeCapture? capture =
           await _scannerCtrl.analyzeImage(image.path);
 
@@ -223,40 +312,43 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 
       final raw = capture?.barcodes.firstOrNull?.rawValue;
       if (raw == null) {
-        setState(() => _isProcessing = false);
-        _showError('No QR code found in the selected image.');
+        _setStage(_ScanStage.scanning);
+        _showError(
+            'No QR Found', 'No QR code was detected in the selected image.');
         return;
       }
-
       await _onDetect(raw);
     } catch (e) {
       if (mounted) {
-        setState(() => _isProcessing = false);
-        _showError('Failed to read image: $e');
+        _setStage(_ScanStage.scanning);
+        _showError('Image Error', 'Failed to read image: $e');
       }
     }
   }
 
-  // ── Torch ─────────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   Future<void> _toggleTorch() async {
     await _scannerCtrl.toggleTorch();
-    setState(() => _torchOn = !_torchOn);
+    if (mounted) setState(() => _torchOn = !_torchOn);
   }
 
-  // ── Error dialog ──────────────────────────────────────────────────────────
+  void _setStage(_ScanStage stage) {
+    if (mounted) setState(() => _stage = stage);
+  }
 
-  void _showError(String message) {
+  Future<bool> _isOnline() async {
+    final results = await Connectivity().checkConnectivity();
+    return results.any((r) => r != ConnectivityResult.none);
+  }
+
+  void _showError(String title, String message) {
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.error_outline_rounded, color: Colors.redAccent),
-            SizedBox(width: 8),
-            Text('Invalid QR Code'),
-          ],
-        ),
+        icon: const Icon(Icons.error_outline_rounded,
+            color: Colors.redAccent, size: 32),
+        title: Text(title),
         content: Text(message),
         actions: [
           TextButton(
@@ -287,16 +379,16 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         actions: [
-          // Torch toggle
           IconButton(
             icon: Icon(
-              _torchOn ? Icons.flashlight_on_rounded : Icons.flashlight_off_rounded,
+              _torchOn
+                  ? Icons.flashlight_on_rounded
+                  : Icons.flashlight_off_rounded,
               color: _torchOn ? Colors.amber : Colors.white,
             ),
             tooltip: _torchOn ? 'Turn off torch' : 'Turn on torch',
-            onPressed: _toggleTorch,
+            onPressed: _isProcessing ? null : _toggleTorch,
           ),
-          // Gallery picker
           IconButton(
             icon: const Icon(Icons.photo_library_outlined, color: Colors.white),
             tooltip: 'Pick from gallery',
@@ -308,7 +400,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Live camera feed ──────────────────────────────────────────────
+          // Camera feed
           MobileScanner(
             controller: _scannerCtrl,
             onDetect: (capture) {
@@ -317,7 +409,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
             },
           ),
 
-          // ── Overlay with cutout ───────────────────────────────────────────
+          // Cutout overlay
           CustomPaint(
             painter: _ScannerOverlayPainter(
               frameSize: frameSize,
@@ -327,57 +419,68 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
             ),
           ),
 
-          // ── Animated scan line inside frame ───────────────────────────────
+          // Scan line — only visible when idle
           if (!_isProcessing)
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(borderRadius),
-                child: _ScanLine(frameSize: frameSize),
+                child: const _ScanLine(frameSize: frameSize),
               ),
             ),
 
-          // ── Instruction label below frame ─────────────────────────────────
+          // Instruction / status label below the frame
           Positioned(
             bottom: MediaQuery.of(context).size.height * 0.22,
             left: 0,
             right: 0,
-            child: const Column(
-              children: [
-                Text(
-                  'Align the QR code within the frame',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: Column(
+                key: ValueKey(_stage),
+                children: [
+                  Text(
+                    _stage.headline,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                SizedBox(height: AppConstants.sm),
-                Text(
-                  'Scanning happens automatically',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
-                ),
-              ],
+                  const SizedBox(height: AppConstants.sm),
+                  Text(
+                    _stage.subtext,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.white60, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // ── Processing overlay ────────────────────────────────────────────
+          // Full-screen processing overlay (parsing / looking up)
           if (_isProcessing)
             Container(
               color: Colors.black.withValues(alpha: 0.72),
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(color: Colors.white),
-                    SizedBox(height: AppConstants.md),
-                    Text(
-                      'Processing QR Code…',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                    const CircularProgressIndicator(color: Colors.white),
+                    const SizedBox(height: AppConstants.md),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Text(
+                        _stage == _ScanStage.lookingUp
+                            ? 'Verifying recipient…'
+                            : 'Reading QR Code…',
+                        key: ValueKey(_stage),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],

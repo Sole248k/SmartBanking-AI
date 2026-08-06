@@ -19,7 +19,7 @@ import '../../features/qr/presentation/qr_hub_screen.dart';
 import '../../features/qr/presentation/qr_scanner_screen.dart';
 import '../../features/qr/presentation/qr_transfer_review_screen.dart';
 import '../../features/qr/presentation/my_qr_screen.dart';
-import '../../features/qr/models/qr_data.dart';
+import '../../features/qr/models/qr_transfer_args.dart';
 import '../../features/qr/presentation/request_money_screen.dart';
 import '../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../features/wallet/presentation/wallet_screen.dart';
@@ -153,8 +153,8 @@ GoRouter router(RouterRef ref) {
               GoRoute(
                 path: 'qr-transfer-review',
                 builder: (context, state) {
-                  final qrData = state.extra as QrData;
-                  return QrTransferReviewScreen(qrData: qrData);
+                  final args = state.extra as QrTransferArgs;
+                  return QrTransferReviewScreen(args: args);
                 },
               ),
               GoRoute(

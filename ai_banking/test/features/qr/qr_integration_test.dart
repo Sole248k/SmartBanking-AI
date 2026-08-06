@@ -1,12 +1,11 @@
-// Integration-style tests for the full QR scan → review → transfer flow.
+// Integration-style tests for the QR transfer flow.
 //
-// These tests use faked repositories so no Firebase connections are required.
-// They verify:
-//   1. QrTransferReviewScreen renders recipient details correctly.
-//   2. QrTransferReviewScreen resets the TransferController before populating
-//      (task 3 regression guard).
-//   3. "Continue to Confirm" navigates to /transfer when amount is valid.
-//   4. QrRepositoryImpl round-trip (generate → parse).
+// Tests verify:
+//   1. QrTransferReviewScreen renders auto-populated recipient details.
+//   2. Validation (empty amount, zero amount).
+//   3. QrTransferArgs convenience getters.
+//   4. QrRepositoryImpl generate → parse round-trip.
+//   5. Success state renders after executeTransfer completes.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,13 +16,13 @@ import 'package:go_router/go_router.dart';
 import 'package:ai_banking/core/errors/failure.dart';
 import 'package:ai_banking/features/qr/data/qr_repository_impl.dart';
 import 'package:ai_banking/features/qr/models/qr_data.dart';
+import 'package:ai_banking/features/qr/models/qr_transfer_args.dart';
 import 'package:ai_banking/features/qr/presentation/qr_transfer_review_screen.dart';
 import 'package:ai_banking/features/transfer/models/beneficiary.dart';
-import 'package:ai_banking/features/transfer/models/transfer_state.dart';
-import 'package:ai_banking/features/transfer/providers/transfer_providers.dart';
 import 'package:ai_banking/features/transfer/repositories/transfer_repository.dart';
-import 'package:ai_banking/shared/models/account.dart';
 import 'package:ai_banking/features/dashboard/providers/dashboard_providers.dart';
+import 'package:ai_banking/features/transfer/providers/transfer_providers.dart';
+import 'package:ai_banking/shared/models/account.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fakes
@@ -33,18 +32,15 @@ class _FakeTransferRepository implements TransferRepository {
   @override
   Future<Either<Failure, List<Beneficiary>>> getRecentBeneficiaries() async =>
       right([]);
-
   @override
-  Stream<List<Beneficiary>> watchRecentBeneficiaries() => const Stream.empty();
-
+  Stream<List<Beneficiary>> watchRecentBeneficiaries() =>
+      const Stream.empty();
   @override
   Future<Either<Failure, void>> addBeneficiary(Beneficiary b) async =>
       right(null);
-
   @override
   Future<Either<Failure, RecipientDetails?>> lookupRecipient(String q) async =>
       right(null);
-
   @override
   Future<Either<Failure, void>> executeTransfer({
     required String fromAccountId,
@@ -79,31 +75,54 @@ const _stubAccounts = [
   ),
 ];
 
+final _verifiedRecipient = RecipientDetails(
+  accountId: 'acc_remote',
+  userId: 'uid_remote',
+  recipientName: 'Ana Reyes',
+  bankName: 'BPI',
+  accountNumber: '010-9876-5432',
+  maskedCardNumber: '**** 5432',
+  cardNetwork: 'visa',
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Harness
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Router-wrapped harness — lets us assert navigation to /transfer.
-Widget _buildRouterHarness(QrData qrData) {
+Widget _buildHarness(QrTransferArgs args) {
+  return ProviderScope(
+    overrides: [
+      transferRepositoryProvider
+          .overrideWith((_) => _FakeTransferRepository()),
+      dashboardAccountsProvider
+          .overrideWith((_) => Stream.value(_stubAccounts)),
+    ],
+    child: MaterialApp(home: QrTransferReviewScreen(args: args)),
+  );
+}
+
+/// Router harness for navigation assertions.
+Widget _buildRouterHarness(QrTransferArgs args) {
   final router = GoRouter(
     initialLocation: '/qr-review',
     routes: [
       GoRoute(
         path: '/qr-review',
-        builder: (context, _) => QrTransferReviewScreen(qrData: qrData),
+        builder: (context, _) => QrTransferReviewScreen(args: args),
       ),
       GoRoute(
-        path: '/transfer',
+        path: '/',
         builder: (context, _) =>
-            const Scaffold(body: Text('transfer_screen_stub')),
+            const Scaffold(body: Text('dashboard_stub')),
       ),
     ],
   );
-
   return ProviderScope(
     overrides: [
-      transferRepositoryProvider.overrideWith((_) => _FakeTransferRepository()),
-      dashboardAccountsProvider.overrideWith((_) => Stream.value(_stubAccounts)),
+      transferRepositoryProvider
+          .overrideWith((_) => _FakeTransferRepository()),
+      dashboardAccountsProvider
+          .overrideWith((_) => Stream.value(_stubAccounts)),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -122,173 +141,168 @@ void main() {
     bankCode: 'BPI',
   );
 
-  // ── 1. Rendering ──────────────────────────────────────────────────────────
-  group('QrTransferReviewScreen — rendering', () {
-    testWidgets('shows recipient name, masked account, and QR Verified chip',
-        (tester) async {
-      await tester.pumpWidget(_buildRouterHarness(validQr));
-      await tester.pumpAndSettle();
+  // ── 1. Rendering with verified recipient ──────────────────────────────────
+  group('QrTransferReviewScreen — auto-populated recipient (verified)', () {
+    late QrTransferArgs args;
+    setUp(() => args = QrTransferArgs(
+        qrData: validQr, recipient: _verifiedRecipient));
 
+    testWidgets('shows backend recipient name', (tester) async {
+      await tester.pumpWidget(_buildHarness(args));
+      await tester.pumpAndSettle();
       expect(find.text('Ana Reyes'), findsOneWidget);
+    });
+
+    testWidgets('shows server-masked account number', (tester) async {
+      await tester.pumpWidget(_buildHarness(args));
+      await tester.pumpAndSettle();
       expect(find.text('**** 5432'), findsOneWidget);
-      expect(find.text('QR Verified'), findsOneWidget);
+    });
+
+    testWidgets('shows Verified chip', (tester) async {
+      await tester.pumpWidget(_buildHarness(args));
+      await tester.pumpAndSettle();
+      expect(find.text('Verified'), findsOneWidget);
+    });
+
+    testWidgets('shows resolved bank name', (tester) async {
+      await tester.pumpWidget(_buildHarness(args));
+      await tester.pumpAndSettle();
+      expect(find.text('BPI'), findsOneWidget);
     });
 
     testWidgets('shows fixed-amount card when QR has pre-filled amount',
         (tester) async {
-      await tester.pumpWidget(_buildRouterHarness(validQr));
+      await tester.pumpWidget(_buildHarness(args));
       await tester.pumpAndSettle();
-
       expect(find.text('Amount (fixed by QR)'), findsOneWidget);
-      expect(find.text('Amount (₱)'), findsNothing);
-    });
-
-    testWidgets('shows amount input field when QR has no amount',
-        (tester) async {
-      const noAmountQr = QrData(
-        recipientId: 'uid_test',
-        recipientName: 'Ana Reyes',
-        accountNumber: '010-9876-5432',
-      );
-      await tester.pumpWidget(_buildRouterHarness(noAmountQr));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Amount (₱)'), findsOneWidget);
     });
 
     testWidgets('shows source account dropdown', (tester) async {
-      await tester.pumpWidget(_buildRouterHarness(validQr));
+      await tester.pumpWidget(_buildHarness(args));
       await tester.pumpAndSettle();
-
       expect(find.textContaining('Checking'), findsOneWidget);
     });
 
-    testWidgets('shows bank code and reference number when present',
+    testWidgets('shows Send Money button (no manual recipient fields)',
         (tester) async {
-      const qrWithRef = QrData(
-        recipientId: 'uid_test',
-        recipientName: 'Ana Reyes',
-        accountNumber: '010-9876-5432',
-        bankCode: 'BDO',
-        referenceNumber: 'REF-XYZ',
-      );
-      await tester.pumpWidget(_buildRouterHarness(qrWithRef));
+      await tester.pumpWidget(_buildHarness(args));
       await tester.pumpAndSettle();
-
-      expect(find.text('BDO'), findsWidgets);
-      expect(find.text('REF-XYZ'), findsOneWidget);
+      expect(find.text('Send Money'), findsOneWidget);
+      // Recipient account field must NOT be editable by user
+      expect(find.widgetWithText(TextFormField, 'Account / Card Number'),
+          findsNothing);
     });
   });
 
-  // ── 2. Validation ─────────────────────────────────────────────────────────
-  group('QrTransferReviewScreen — validation', () {
-    testWidgets('shows error when amount is empty on submit', (tester) async {
-      const noAmountQr = QrData(
+  // ── 2. Rendering with external (unverified) recipient ─────────────────────
+  group('QrTransferReviewScreen — external recipient', () {
+    testWidgets('shows External chip when no backend recipient',
+        (tester) async {
+      final args = QrTransferArgs(qrData: validQr);
+      await tester.pumpWidget(_buildHarness(args));
+      await tester.pumpAndSettle();
+      expect(find.text('External'), findsOneWidget);
+    });
+
+    testWidgets('falls back to QR name when no backend', (tester) async {
+      final args = QrTransferArgs(qrData: validQr);
+      await tester.pumpWidget(_buildHarness(args));
+      await tester.pumpAndSettle();
+      expect(find.text('Ana Reyes'), findsOneWidget);
+    });
+  });
+
+  // ── 3. Amount input ───────────────────────────────────────────────────────
+  group('QrTransferReviewScreen — amount field', () {
+    testWidgets('shows editable amount field when QR has no amount',
+        (tester) async {
+      const noAmtQr = QrData(
         recipientId: 'uid_test',
         recipientName: 'Ana Reyes',
         accountNumber: '010-9876-5432',
       );
-      await tester.pumpWidget(_buildRouterHarness(noAmountQr));
+      final args =
+          QrTransferArgs(qrData: noAmtQr, recipient: _verifiedRecipient);
+      await tester.pumpWidget(_buildHarness(args));
+      await tester.pumpAndSettle();
+      expect(find.text('Enter amount (₱)'), findsOneWidget);
+    });
+
+    testWidgets('shows validation error when amount empty', (tester) async {
+      const noAmtQr = QrData(
+        recipientId: 'uid_test',
+        recipientName: 'Ana Reyes',
+        accountNumber: '010-9876-5432',
+      );
+      final args = QrTransferArgs(qrData: noAmtQr);
+      await tester.pumpWidget(_buildHarness(args));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Continue to Confirm'));
+      await tester.tap(find.text('Send Money'));
       await tester.pump();
 
       expect(find.text('Amount is required'), findsOneWidget);
     });
 
-    testWidgets('shows error when amount is zero', (tester) async {
-      const noAmountQr = QrData(
+    testWidgets('shows validation error when amount is zero', (tester) async {
+      const noAmtQr = QrData(
         recipientId: 'uid_test',
         recipientName: 'Ana Reyes',
         accountNumber: '010-9876-5432',
       );
-      await tester.pumpWidget(_buildRouterHarness(noAmountQr));
+      final args = QrTransferArgs(qrData: noAmtQr);
+      await tester.pumpWidget(_buildHarness(args));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextFormField).first, '0');
-      await tester.tap(find.text('Continue to Confirm'));
+      await tester.tap(find.text('Send Money'));
       await tester.pump();
 
-      expect(find.text('Enter a valid amount'), findsOneWidget);
+      expect(find.text('Enter a valid amount greater than zero'),
+          findsOneWidget);
     });
   });
 
-  // ── 3. Task 3 regression: TransferController reset ────────────────────────
-  group('QrTransferReviewScreen — TransferController reset (task 3)', () {
-    testWidgets(
-        'resets stale TransferController state then populates fresh values',
+  // ── 4. Reference number display ───────────────────────────────────────────
+  group('QrTransferReviewScreen — reference / wallet metadata', () {
+    testWidgets('shows reference number when present', (tester) async {
+      const qrWithRef = QrData(
+        recipientId: 'uid_test',
+        recipientName: 'Ana Reyes',
+        accountNumber: '010-9876-5432',
+        referenceNumber: 'REF-XYZ-001',
+        walletId: 'wallet_abc',
+      );
+      final args = QrTransferArgs(qrData: qrWithRef);
+      await tester.pumpWidget(_buildHarness(args));
+      await tester.pumpAndSettle();
+
+      expect(find.text('REF-XYZ-001'), findsOneWidget);
+      expect(find.text('wallet_abc'), findsOneWidget);
+    });
+  });
+
+  // ── 5. Success flow ───────────────────────────────────────────────────────
+  group('QrTransferReviewScreen — success state', () {
+    testWidgets('shows Transfer Successful after executeTransfer completes',
         (tester) async {
-      final container = ProviderContainer(
-        overrides: [
-          transferRepositoryProvider.overrideWith((_) => _FakeTransferRepository()),
-          dashboardAccountsProvider.overrideWith((_) => Stream.value(_stubAccounts)),
-        ],
+      // Use a QR with pre-filled amount so Send Money is tappable immediately
+      final args = QrTransferArgs(
+        qrData: validQr,
+        recipient: _verifiedRecipient,
       );
-      addTearDown(container.dispose);
-
-      // Inject stale state
-      container.read(transferControllerProvider.notifier).setRecipientDetails(
-            recipientName: 'Old Name',
-            recipientAccountNumber: '010-0000-0000',
-            bankName: 'OldBank',
-            amount: 999.0,
-          );
-      expect(
-        container.read(transferControllerProvider).step,
-        TransferStep.confirm,
-        reason: 'Pre-condition: stale confirm step',
-      );
-
-      final router = GoRouter(
-        initialLocation: '/qr-review',
-        routes: [
-          GoRoute(
-            path: '/qr-review',
-            builder: (context, _) => QrTransferReviewScreen(qrData: validQr),
-          ),
-          GoRoute(
-            path: '/transfer',
-            builder: (context, _) =>
-                const Scaffold(body: Text('transfer_screen_stub')),
-          ),
-        ],
-      );
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp.router(routerConfig: router),
-        ),
-      );
+      await tester.pumpWidget(_buildRouterHarness(args));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Continue to Confirm'));
+      await tester.tap(find.text('Send Money'));
       await tester.pumpAndSettle();
 
-      final state = container.read(transferControllerProvider);
-      expect(state.recipientName, 'Ana Reyes',
-          reason: 'New recipient populated after reset');
-      expect(state.amount, 250.0);
-      expect(state.step, TransferStep.confirm);
+      expect(find.text('Transfer Successful!'), findsOneWidget);
     });
   });
 
-  // ── 4. Navigation ─────────────────────────────────────────────────────────
-  group('QrTransferReviewScreen — navigation', () {
-    testWidgets('navigates to /transfer after successful proceed',
-        (tester) async {
-      await tester.pumpWidget(_buildRouterHarness(validQr));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Continue to Confirm'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('transfer_screen_stub'), findsOneWidget);
-    });
-  });
-
-  // ── 5. QrRepositoryImpl round-trip ────────────────────────────────────────
+  // ── 6. QrRepositoryImpl round-trip ────────────────────────────────────────
   group('QrRepositoryImpl — generate → parse round-trip', () {
     test('valid payload round-trips correctly', () async {
       final repo = QrRepositoryImpl();
@@ -307,4 +321,3 @@ void main() {
     });
   });
 }
-

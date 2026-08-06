@@ -22,7 +22,7 @@ final profileRepositoryProvider =
 );
 
 typedef ProfileRepositoryRef = AutoDisposeProviderRef<ProfileRepository>;
-String _$profileControllerHash() => r'6e8148b5b76f17309bdfda1c42392497f03389dc';
+String _$profileControllerHash() => r'3e43eab02bd06b759e9971865f63395be8aee1b1';
 
 /// See also [ProfileController].
 @ProviderFor(ProfileController)

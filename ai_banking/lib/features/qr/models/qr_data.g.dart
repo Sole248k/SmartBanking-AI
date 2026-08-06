@@ -12,6 +12,12 @@ _$QrDataImpl _$$QrDataImplFromJson(Map<String, dynamic> json) => _$QrDataImpl(
       accountNumber: json['accountNumber'] as String,
       amount: (json['amount'] as num?)?.toDouble(),
       note: json['note'] as String?,
+      walletId: json['walletId'] as String?,
+      userId: json['userId'] as String?,
+      bankCode: json['bankCode'] as String?,
+      referenceNumber: json['referenceNumber'] as String?,
+      expiresAt: json['expiresAt'] as String?,
+      version: json['version'] as String? ?? '1',
     );
 
 Map<String, dynamic> _$$QrDataImplToJson(_$QrDataImpl instance) =>
@@ -21,4 +27,10 @@ Map<String, dynamic> _$$QrDataImplToJson(_$QrDataImpl instance) =>
       'accountNumber': instance.accountNumber,
       'amount': instance.amount,
       'note': instance.note,
+      'walletId': instance.walletId,
+      'userId': instance.userId,
+      'bankCode': instance.bankCode,
+      'referenceNumber': instance.referenceNumber,
+      'expiresAt': instance.expiresAt,
+      'version': instance.version,
     };
