@@ -43,6 +43,7 @@ import '../../features/products/presentation/products_screen.dart';
 import '../../features/products/presentation/new_account_screen.dart';
 import '../../features/products/presentation/account_review_screen.dart';
 import '../../features/products/presentation/account_success_screen.dart';
+import '../../features/invest/presentation/investment_screen.dart';
 
 
 import '../../shared/providers/session_lock_provider.dart';
@@ -274,6 +275,10 @@ GoRouter router(RouterRef ref) {
                 },
               ),
             ],
+          ),
+          GoRoute(
+            path: '/invest',
+            builder: (context, state) => const InvestmentScreen(),
           ),
         ],
       ),

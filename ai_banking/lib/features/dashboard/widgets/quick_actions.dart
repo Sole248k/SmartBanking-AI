@@ -54,9 +54,9 @@ class QuickActions extends StatelessWidget {
               onTap: () => context.push('/budgets'),
             ),
             _ActionButton(
-              icon: Icons.more_horiz_rounded,
-              label: 'More',
-              onTap: () {},
+              icon: Icons.show_chart_rounded,
+              label: 'Invest',
+              onTap: () => context.push('/invest'),
             ),
           ],
         ),
