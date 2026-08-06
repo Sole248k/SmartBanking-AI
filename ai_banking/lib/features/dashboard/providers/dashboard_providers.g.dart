@@ -24,7 +24,7 @@ final transactionRepositoryProvider =
 
 typedef TransactionRepositoryRef
     = AutoDisposeProviderRef<TransactionRepository>;
-String _$dashboardAccountsHash() => r'dc15e0dea0a5b1067a8b3baad0cab9c4cbe1987b';
+String _$dashboardAccountsHash() => r'0238beefe491c5eb4d7a2738ff492dc19b8b6b86';
 
 /// See also [dashboardAccounts].
 @ProviderFor(dashboardAccounts)
@@ -41,7 +41,7 @@ final dashboardAccountsProvider =
 
 typedef DashboardAccountsRef = AutoDisposeStreamProviderRef<List<Account>>;
 String _$recentTransactionsHash() =>
-    r'fa4816c36b99b9d440e12c1c68b43ea4e2105c73';
+    r'c99d6952e431ce6e42f6fe1efde82b58509bb9a9';
 
 /// See also [recentTransactions].
 @ProviderFor(recentTransactions)
