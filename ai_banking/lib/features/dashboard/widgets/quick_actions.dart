@@ -28,9 +28,9 @@ class QuickActions extends StatelessWidget {
               onTap: () => context.push('/pay-bills'),
             ),
             _ActionButton(
-              icon: Icons.account_balance_wallet_rounded,
-              label: 'Wallet',
-              onTap: () => context.push('/wallet'),
+              icon: Icons.add_circle_outline_rounded,
+              label: 'Top-up',
+              onTap: () => context.push('/wallet/top-up'),
             ),
           ],
         ),
@@ -71,6 +71,7 @@ class _ActionButton extends StatelessWidget {
     required this.label,
     required this.onTap,
   });
+
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -78,6 +79,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isLightMode = theme.brightness == Brightness.light;
 
     return Column(
       children: [
@@ -91,8 +93,12 @@ class _ActionButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppConstants.radiusLg),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
+                  // Stronger shadow in Light mode, subtle in Dark mode
+                  color: Colors.black.withValues(
+                    alpha: isLightMode ? 0.15 : 0.05,
+                  ),
+                  blurRadius: isLightMode ? 12 : 10,
+                  spreadRadius: isLightMode ? 1 : 0,
                   offset: const Offset(0, 4),
                 ),
               ],
