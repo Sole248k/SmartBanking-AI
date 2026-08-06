@@ -7,15 +7,6 @@ import '../../../shared/models/account.dart';
 import '../providers/active_account_provider.dart';
 import 'balance_card.dart';
 
-/// Horizontal swipeable card carousel on dashboard.
-///
-/// Features:
-///   - Mouse drag, trackpad, and touch drag support.
-///   - Previous / Next arrow navigation buttons for desktop users.
-///   - Mouse wheel horizontal scroll listener.
-///   - Smooth active page scaling effect.
-///   - Displays all linked cards (SmartBank accounts + linked external cards).
-///   - Includes an "+ Add Card" item as the LAST card in the carousel.
 class CardCarousel extends ConsumerStatefulWidget {
   const CardCarousel({super.key, required this.accounts});
   final List<Account> accounts;
@@ -31,7 +22,6 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
   @override
   void initState() {
     super.initState();
-    // Default page controller, initialPage dynamically bound in build
     _pageController = PageController(viewportFraction: 0.85);
   }
 
@@ -41,8 +31,8 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
     super.dispose();
   }
 
-  void _nextPage() {
-    if (_currentPage < widget.accounts.length) {
+  void _nextPage(int totalItems) {
+    if (_currentPage < totalItems - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -61,37 +51,10 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final activeAccount = ref.watch(activeAccountProvider);
-
-    // Sort accounts so that Default card is always at index 0 (first position)
+    // Sort accounts so that Default card is always at index 0
     final sortedAccounts = List<Account>.from(widget.accounts)
       ..sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
 
-    int targetIdx = 0;
-    if (activeAccount != null) {
-      final idx = sortedAccounts.indexWhere((a) => a.id == activeAccount.id);
-      if (idx != -1) targetIdx = idx;
-    } else if (sortedAccounts.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ref.read(activeAccountProvider.notifier).select(sortedAccounts.first);
-      });
-    }
-
-    // Sync PageController position if out of sync
-    if (_pageController.hasClients &&
-        _pageController.page?.round() != targetIdx &&
-        _currentPage != targetIdx) {
-      _currentPage = targetIdx;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (_pageController.hasClients) {
-          _pageController.jumpToPage(targetIdx);
-        }
-      });
-    }
-
-    // Total items = accounts count + 1 for the "+ Add Card" card at the end
     final totalItems = sortedAccounts.length + 1;
     final theme = Theme.of(context);
 
@@ -107,7 +70,7 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
                   if (pointerSignal is PointerScrollEvent) {
                     if (pointerSignal.scrollDelta.dx > 0 ||
                         pointerSignal.scrollDelta.dy > 0) {
-                      _nextPage();
+                      _nextPage(totalItems);
                     } else if (pointerSignal.scrollDelta.dx < 0 ||
                         pointerSignal.scrollDelta.dy < 0) {
                       _previousPage();
@@ -143,14 +106,12 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
                           double value = 1.0;
                           if (_pageController.hasClients &&
                               _pageController.position.haveDimensions) {
-                            value = _pageController.page! - index;
-                            value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
+                            value = (_pageController.page ?? _currentPage.toDouble()) - index;
+                            value = (1 - (value.abs() * 0.1)).clamp(0.85, 1.0);
                           }
                           return Center(
-                            child: SizedBox(
-                              height: Curves.easeOut.transform(value) * 210,
-                              width: Curves.easeOut.transform(value) *
-                                  MediaQuery.of(context).size.width,
+                            child: Transform.scale(
+                              scale: value,
                               child: child,
                             ),
                           );
@@ -175,7 +136,7 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
               ),
             ),
 
-            // Left Navigation Arrow Button (Desktop / Web)
+            // Left Navigation Arrow Button
             if (_currentPage > 0)
               Positioned(
                 left: 4,
@@ -185,13 +146,13 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
                 ),
               ),
 
-            // Right Navigation Arrow Button (Desktop / Web)
+            // Right Navigation Arrow Button
             if (_currentPage < totalItems - 1)
               Positioned(
                 right: 4,
                 child: _ArrowButton(
                   icon: Icons.chevron_right_rounded,
-                  onPressed: _nextPage,
+                  onPressed: () => _nextPage(totalItems),
                 ),
               ),
           ],
@@ -221,7 +182,6 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
     );
   }
 
-  /// Dashed/Glass "+ Add New Card" item as the last carousel card
   Widget _buildAddCardItem(BuildContext context, ThemeData theme) {
     return InkWell(
       onTap: () => context.push('/card-management/add'),
@@ -235,7 +195,6 @@ class _CardCarouselState extends ConsumerState<CardCarousel> {
           border: Border.all(
             color: theme.colorScheme.primary.withOpacity(0.35),
             width: 2,
-            style: BorderStyle.solid,
           ),
         ),
         child: Column(
