@@ -3,12 +3,16 @@ import '../data/firebase_auth_repository_impl.dart';
 import '../domain/auth_repository.dart';
 import '../domain/auth_user.dart';
 
+import '../../dashboard/providers/active_account_provider.dart';
+import '../../dashboard/providers/dashboard_providers.dart';
+
 part 'auth_provider.g.dart';
 
 @riverpod
 AuthRepository authRepository(AuthRepositoryRef ref) {
   return FirebaseAuthRepositoryImpl();
 }
+
 
 @riverpod
 Stream<AuthUser?> authStateChanges(AuthStateChangesRef ref) {
@@ -69,6 +73,10 @@ class AuthNotifier extends _$AuthNotifier {
   Future<void> logout() async {
     state = const AsyncValue.loading();
     await ref.read(authRepositoryProvider).logout();
+    ref.invalidate(dashboardAccountsProvider);
+    ref.invalidate(activeAccountProvider);
+    ref.invalidate(recentTransactionsProvider);
     state = const AsyncValue.data(null);
   }
+
 }

@@ -3,7 +3,9 @@ import '../data/firestore_transaction_repository_impl.dart';
 import '../models/transaction.dart';
 import '../repositories/transaction_repository.dart';
 import '../../../shared/models/account.dart';
+import '../../auth/providers/auth_provider.dart';
 import 'active_account_provider.dart';
+
 
 part 'dashboard_providers.g.dart';
 
@@ -14,11 +16,16 @@ TransactionRepository transactionRepository(TransactionRepositoryRef ref) {
 
 @riverpod
 Stream<List<Account>> dashboardAccounts(DashboardAccountsRef ref) {
+  final authUser = ref.watch(authStateChangesProvider).value;
+  if (authUser == null) return Stream.value([]);
   return ref.watch(transactionRepositoryProvider).watchAccounts();
 }
 
 @riverpod
 Stream<List<Transaction>> recentTransactions(RecentTransactionsRef ref) {
+  final authUser = ref.watch(authStateChangesProvider).value;
+  if (authUser == null) return Stream.value([]);
+
   final activeAccount = ref.watch(activeAccountProvider);
 
   return ref.watch(transactionRepositoryProvider).watchRecentTransactions().map((transactions) {
@@ -38,3 +45,4 @@ Stream<List<Transaction>> recentTransactions(RecentTransactionsRef ref) {
     }).toList();
   });
 }
+

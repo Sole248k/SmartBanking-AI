@@ -117,9 +117,22 @@ class ProfileScreen extends ConsumerWidget {
               ),
               AppListTile(
                 title: const Text('KYC Verification'),
-                subtitle: Text(profile.kycStatus),
+                subtitle: Text(
+                  _kycSubtitle(profile.kycStatus),
+                  style: TextStyle(
+                    color: kycColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 leading: const Icon(Icons.verified_user_outlined),
-                trailing: Icon(kycIcon, color: kycColor),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(kycIcon, color: kycColor, size: 20),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.chevron_right),
+                  ],
+                ),
                 onTap: () => context.push('/kyc'),
               ),
             ],
@@ -209,31 +222,48 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  String _kycSubtitle(String status) {
+    switch (status) {
+      case 'Approved':
+        return 'Verified';
+      case 'Pending Review':
+      case 'Pending':
+        return 'Pending Verification';
+      case 'Rejected':
+        return 'Verification Rejected';
+      default:
+        return 'Not Yet Verified';
+    }
+  }
+
   Color _kycColor(String status) {
     switch (status) {
       case 'Approved':
         return Colors.green;
       case 'Pending Review':
+      case 'Pending':
         return Colors.orange;
       case 'Rejected':
         return Colors.red;
       default:
-        return Colors.grey;
+        return Colors.redAccent;
     }
   }
 
   IconData _kycIcon(String status) {
     switch (status) {
       case 'Approved':
-        return Icons.check_circle;
+        return Icons.check_circle_rounded;
       case 'Pending Review':
+      case 'Pending':
         return Icons.hourglass_top_rounded;
       case 'Rejected':
-        return Icons.cancel;
+        return Icons.cancel_rounded;
       default:
-        return Icons.chevron_right;
+        return Icons.warning_amber_rounded;
     }
   }
+
 
   Widget _buildErrorState(BuildContext context, WidgetRef ref, String error) {
     return Padding(

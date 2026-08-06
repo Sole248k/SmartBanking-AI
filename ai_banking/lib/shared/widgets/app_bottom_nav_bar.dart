@@ -16,10 +16,11 @@ class AppBottomNavBar extends StatelessWidget {
 
   static const _items = [
     _NavItemData(icon: Icons.dashboard_rounded, label: 'Home'),
-    _NavItemData(icon: Icons.grid_view_rounded, label: 'Products'),
+    _NavItemData(icon: Icons.shopping_bag_rounded, label: 'Products'),
     _NavItemData(icon: Icons.bar_chart_rounded, label: 'Analytics'),
     _NavItemData(icon: Icons.person_rounded, label: 'Profile'),
   ];
+
 
   @override
   Widget build(BuildContext context) {
