@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../core/utils/kyc_gatekeeper.dart';
 import '../../../shared/models/account.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
@@ -46,6 +47,19 @@ class _NewAccountScreenState extends ConsumerState<NewAccountScreen> {
   }
 
   void _submitForm() {
+    final profile = ref.read(profileControllerProvider).value;
+    final kycGate = KycGateStatus.parse(profile?.kycStatus);
+
+    if (!kycGate.isApproved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(kycGate.bannerMessage),
+          backgroundColor: kycGate.statusColor,
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     final depositAmount = double.tryParse(_depositController.text.trim()) ?? 0.0;
@@ -71,9 +85,56 @@ class _NewAccountScreenState extends ConsumerState<NewAccountScreen> {
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(profileControllerProvider);
     final theme = Theme.of(context);
+    final kycGate = KycGateStatus.parse(profileAsync.value?.kycStatus);
 
-    final kycStatus = profileAsync.value?.kycStatus ?? 'Not Started';
-    final isKycApproved = kycStatus == 'Approved';
+    if (!kycGate.isApproved) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Open New Account')),
+        body: Padding(
+          padding: AppConstants.screenPadding,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: kycGate.statusColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(kycGate.icon, size: 64, color: kycGate.statusColor),
+                ),
+                const SizedBox(height: AppConstants.lg),
+                Text(
+                  kycGate.bannerTitle,
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppConstants.sm),
+                Text(
+                  kycGate.bannerMessage,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppConstants.xl),
+                AppButton(
+                  text: kycGate.ctaButtonText,
+                  onPressed: () => context.push('/kyc'),
+                ),
+                const SizedBox(height: AppConstants.md),
+                AppButton(
+                  text: 'Back to Products',
+                  variant: AppButtonVariant.outline,
+                  onPressed: () => context.go('/products'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -86,50 +147,6 @@ class _NewAccountScreenState extends ConsumerState<NewAccountScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // KYC Warning Banner if not approved
-              if (!isKycApproved) ...[
-                Container(
-                  padding: const EdgeInsets.all(AppConstants.md),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-                    border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                          const SizedBox(width: AppConstants.sm),
-                          Expanded(
-                            child: Text(
-                              'KYC Approval Required',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange[800],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppConstants.xs),
-                      Text(
-                        'KYC approval is required before creating a new account. Current status: $kycStatus.',
-                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.orange[900]),
-                      ),
-                      const SizedBox(height: AppConstants.md),
-                      AppButton(
-                        text: 'Complete KYC Verification',
-                        icon: Icons.verified_user_rounded,
-                        onPressed: () => context.push('/kyc'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppConstants.xl),
-              ],
-
               // Section: Personal Information
               Text(
                 'Personal Information',
@@ -225,7 +242,7 @@ class _NewAccountScreenState extends ConsumerState<NewAccountScreen> {
               AppButton(
                 text: 'Review Application',
                 icon: Icons.arrow_forward_rounded,
-                onPressed: isKycApproved ? _submitForm : null,
+                onPressed: _submitForm,
               ),
               const SizedBox(height: AppConstants.xl),
             ],

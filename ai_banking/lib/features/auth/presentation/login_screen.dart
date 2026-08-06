@@ -266,6 +266,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: const Text("Don't have an account? Create one"),
                   ),
                 ),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => context.push('/admin/login'),
+                    icon: const Icon(Icons.admin_panel_settings_outlined, size: 16),
+                    label: const Text('Admin Portal Sign In'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                      textStyle: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

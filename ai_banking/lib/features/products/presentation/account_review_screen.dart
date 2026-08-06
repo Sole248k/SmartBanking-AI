@@ -9,6 +9,8 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../dashboard/providers/active_account_provider.dart';
 import '../../dashboard/providers/dashboard_providers.dart';
+import '../../admin/domain/product_application.dart';
+import '../providers/product_application_user_providers.dart';
 
 class AccountReviewScreen extends ConsumerStatefulWidget {
   const AccountReviewScreen({super.key, required this.applicationData});
@@ -44,55 +46,39 @@ class _AccountReviewScreenState extends ConsumerState<AccountReviewScreen> {
     final accountType = widget.applicationData['accountType'] as AccountType;
     final initialDeposit = widget.applicationData['initialDeposit'] as double;
 
-    final accountNumber = _generateAccountNumber();
-    final cardNumber = _generateCardNumber();
-    final typeName = accountType == AccountType.savings ? 'Savings' : 'Current';
-    final label = 'SmartBank $typeName Account';
-
-    final newAccount = Account(
-      id: '',
-      userId: '',
-      accountNumber: accountNumber,
-      cardNumber: cardNumber,
-      holderName: fullName,
-      type: accountType,
-      label: label,
-      bankName: 'SmartBank',
-      balance: initialDeposit,
-      availableBalance: initialDeposit,
-      currency: 'PHP',
-      cardNetwork: CardNetwork.visa,
-      cardGradientColors: accountType == AccountType.savings
-          ? ['#0A84FF', '#5E5CE6']
-          : ['#30D158', '#0A84FF'],
-      isDefault: false,
-    );
+    final productType = accountType == AccountType.savings
+        ? ProductType.savings
+        : ProductType.current;
 
     final result = await ref
-        .read(transactionRepositoryProvider)
-        .createAccount(newAccount, initialDeposit: initialDeposit);
+        .read(userProductApplicationServiceProvider)
+        .submitApplication(
+          productType: productType,
+          applicationData: {
+            'fullName': fullName,
+            'initialDeposit': initialDeposit,
+            'accountType': accountType.name,
+            'submittedAt': DateTime.now().toIso8601String(),
+          },
+        );
 
     setState(() => _isLoading = false);
 
     result.fold(
       (failure) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create account: ${failure.message}')),
+          SnackBar(content: Text('Failed to submit application: ${failure.message}')),
         );
       },
-      (createdAccount) {
-        // Set new account as active account in carousel
-        ref.read(activeAccountProvider.notifier).select(createdAccount);
-        ref.invalidate(dashboardAccountsProvider);
-
-        context.go(
-          '/products/success',
-          extra: {
-            'account': createdAccount,
-            'initialDeposit': initialDeposit,
-            'createdAt': DateTime.now().toIso8601String(),
-          },
+      (appId) {
+        ref.invalidate(myProductApplicationsProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Application submitted! Awaiting admin review and verification.'),
+            backgroundColor: Colors.blue,
+          ),
         );
+        context.go('/products/status');
       },
     );
   }
